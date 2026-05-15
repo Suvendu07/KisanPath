@@ -1,0 +1,86 @@
+__pycache__/
+*.py[cod]
+*$py.class
+roadmap.txt
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Environment Files
+.python-version
+
+
+# Environment Variables
+.env
+
+# SQLite Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Alembic
+alembic/versions/*.pyc
+
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+
+.vscode/
+.idea/
+
+
+.DS_Store
+Thumbs.db
+
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React Build
+build/
+dist/
+
+
+# Model Files
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.joblib
+*.pkl
+
+# Large datasets
+datasets/
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+uploads/
+media/
+
+
+
+docker-compose.override.yml
+
+
+.cache/
+
+
+temp/
+tmp/
+
+
+secret.json
+credentials.json
+config.json
