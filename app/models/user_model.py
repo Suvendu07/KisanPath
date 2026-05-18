@@ -21,8 +21,8 @@ class User(Base):
     
     full_name = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, index=True, nullable=False)
-    phone = Column(Integer, unique=True, nullable=True)
-    hashed_passsword = Column(String(255), unique=True, nullable=False)
+    phone = Column(String(15), unique=True, nullable=True)
+    hashed_password = Column(String(255), unique=True, nullable=False)
     profile_image = Column(String(255), nullable=True)
     
     

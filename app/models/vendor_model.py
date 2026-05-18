@@ -13,7 +13,7 @@ class Vendor(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     
-    user_id = Column(Integer, ForeignKey("users.id", endelete = "CASCADE"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete = "CASCADE"), unique=True, nullable=False)
     
     
     bussiness_name = Column(String(150), nullable=False)
