@@ -14,17 +14,17 @@ class DashboardStats(BaseModel):
     total_buyers : int
     total_products : int
     total_orders : int
-    pending_oders : int
+    pending_orders : int
     total_revenue : float
     pending_farmer_approvals : int
-    pending_vendor_apprvals : int
+    pending_vendor_approvals : int
 
     
     
 class UserListItem(BaseModel):
     id : int
     full_name : str
-    email = EmailStr
+    email : EmailStr
     phone : Optional[str]
     role : UserRole
     is_active : bool
