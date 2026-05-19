@@ -7,7 +7,7 @@ from app.models.order_model import OrderStatus
 
 
 
-class DashboardStatus(BaseModel):
+class DashboardStats(BaseModel):
     total_users : int
     total_farmers : int
     total_vendors : int

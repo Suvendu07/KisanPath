@@ -1,0 +1,337 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.core.permision import require_admin
+from app.models.user_model import User, UserRole
+from app.models.farmer_model import Farmer
+from app.models.vendor_model import Vendor
+from app.models.product_model import Product
+from app.models.order_model import Order
+from app.models.feedback_model import Feedback
+from app.models.mandi_model import MandiPrice
+from app.schemas.admin import (
+    DashboardStats,
+    UserListItem,
+    AdminUserUpdate,
+    ApprovalAction,
+    OrderStatusUpdate,
+)
+
+router = APIRouter()
+
+
+
+
+@router.get("/dashboard", response_model=DashboardStats, summary="Platform overview stats")
+def admin_dashboard(
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    total_revenue = db.query(Order).all()
+    revenue_sum   = sum(
+        o.final_amount for o in total_revenue if o.status == "delivered"
+    )
+
+    return DashboardStats(
+        total_users     = db.query(User).count(),
+        total_farmers   = db.query(User).filter(User.role == UserRole.FARMER).count(),
+        total_vendors   = db.query(User).filter(User.role == UserRole.VENDOR).count(),
+        total_buyers    = db.query(User).filter(User.role == UserRole.USER).count(),
+        total_products  = db.query(Product).count(),
+        total_orders    = db.query(Order).count(),
+        pending_orders  = db.query(Order).filter(Order.status == "pending").count(),
+        total_revenue   = round(revenue_sum, 2),
+        pending_farmer_approvals = db.query(Farmer).filter(Farmer.is_approved == False).count(),
+        pending_vendor_approvals = db.query(Vendor).filter(Vendor.is_approved == False).count(),
+    )
+
+
+
+
+@router.get("/users", summary="List all users")
+def list_users(
+    role:         str  = None,
+    is_active:    bool = None,
+    search:       str  = None,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    query = db.query(User)
+
+    if role:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+    if search:
+        query = query.filter(
+            User.full_name.ilike(f"%{search}%") |
+            User.email.ilike(f"%{search}%")
+        )
+
+    users = query.order_by(User.created_at.desc()).all()
+    return [UserListItem.model_validate(u) for u in users]
+
+
+
+
+@router.get("/users/{user_id}", summary="Get any user's full detail")
+def get_user(
+    user_id:      int,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    return UserListItem.model_validate(user)
+
+
+
+
+@router.put("/users/{user_id}", summary="Update any user's details")
+def update_user(
+    user_id:      int,
+    payload:      AdminUserUpdate,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    for field, value in payload.model_dump(exclude_none=True).items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return {"message": f"User {user_id} updated successfully."}
+
+
+
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a user permanently",
+)
+def delete_user(
+    user_id:      int,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    if user_id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin cannot delete their own account."
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    db.delete(user)
+    db.commit()
+
+
+
+
+@router.get("/farmers", summary="List all farmer profiles")
+def list_farmers(
+    is_approved:  bool = None,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    query = db.query(Farmer)
+    if is_approved is not None:
+        query = query.filter(Farmer.is_approved == is_approved)
+
+    farmers = query.all()
+    result  = []
+    for f in farmers:
+        result.append({
+            "farmer_id":     f.id,
+            "user_id":       f.user_id,
+            "full_name":     f.user.full_name if f.user else None,
+            "email":         f.user.email     if f.user else None,
+            "farm_name":     f.farm_name,
+            "farm_location": f.farm_location,
+            "is_approved":   f.is_approved,
+            "created_at":    f.created_at,
+        })
+    return result
+
+
+
+
+@router.put("/farmers/{farmer_id}/approve", summary="Approve or reject a farmer")
+def approve_farmer(
+    farmer_id:    int,
+    payload:      ApprovalAction,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found.")
+
+    farmer.is_approved = payload.approve
+    db.commit()
+
+    status_text = "approved" if payload.approve else "rejected"
+    return {"message": f"Farmer account {status_text} successfully."}
+
+
+
+
+
+@router.get("/vendors", summary="List all vendor profiles")
+def list_vendors(
+    is_approved:  bool = None,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    query = db.query(Vendor)
+    if is_approved is not None:
+        query = query.filter(Vendor.is_approved == is_approved)
+
+    vendors = query.all()
+    result  = []
+    for v in vendors:
+        result.append({
+            "vendor_id":      v.id,
+            "user_id":        v.user_id,
+            "full_name":      v.user.full_name   if v.user else None,
+            "email":          v.user.email       if v.user else None,
+            "business_name":  v.business_name,
+            "mandi_name":     v.mandi_name,
+            "is_approved":    v.is_approved,
+            "created_at":     v.created_at,
+        })
+    return result
+
+
+
+
+
+
+@router.put("/vendors/{vendor_id}/approve", summary="Approve or reject a vendor")
+def approve_vendor(
+    vendor_id:    int,
+    payload:      ApprovalAction,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found.")
+
+    vendor.is_approved = payload.approve
+    db.commit()
+
+    status_text = "approved" if payload.approve else "rejected"
+    return {"message": f"Vendor account {status_text} successfully."}
+
+
+
+
+
+@router.get("/orders", summary="List all orders on the platform")
+def list_all_orders(
+    order_status: str  = None,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    query = db.query(Order)
+    if order_status:
+        query = query.filter(Order.status == order_status)
+
+    orders = query.order_by(Order.created_at.desc()).all()
+    return [
+        {
+            "order_id":      o.id,
+            "buyer_name":    o.buyer.full_name if o.buyer else None,
+            "status":        o.status,
+            "final_amount":  o.final_amount,
+            "tracking_id":   o.tracking_id,
+            "created_at":    o.created_at,
+        }
+        for o in orders
+    ]
+
+
+
+
+
+@router.put("/orders/{order_id}/status", summary="Update any order's status")
+def update_order_status(
+    order_id:     int,
+    payload:      OrderStatusUpdate,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    from datetime import datetime
+
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+
+    order.status = payload.status
+    if payload.tracking_id:
+        order.tracking_id = payload.tracking_id
+    if payload.notes:
+        order.notes = payload.notes
+    if payload.status == "delivered":
+        order.delivered_at = datetime.utcnow()
+
+    db.commit()
+    return {"message": f"Order {order_id} status updated to '{payload.status}'."}
+
+
+
+
+
+@router.get("/products", summary="List all products on the platform")
+def list_all_products(
+    is_available: bool = None,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    query = db.query(Product)
+    if is_available is not None:
+        query = query.filter(Product.is_available == is_available)
+
+    products = query.all()
+    return [
+        {
+            "product_id":    p.id,
+            "name":          p.name,
+            "category":      p.category,
+            "price":         p.price_per_unit,
+            "stock":         p.stock_quantity,
+            "is_available":  p.is_available,
+            "farmer_id":     p.farmer_id,
+        }
+        for p in products
+    ]
+
+
+
+
+
+@router.delete(
+    "/products/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove any product from the platform",
+)
+def delete_product(
+    product_id:   int,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found.")
+
+    db.delete(product)
+    db.commit()
