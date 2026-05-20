@@ -11,13 +11,16 @@ from app.core.dependencies import (
 from app.core.security import decode_token, create_access_token
 from app.models.user_model import User
 from app.schemas.auth import (
-    RegisterRequest,
+    UserRegister,
+    FarmerRegister,
+    VendorRegister,
     LoginRequest,
     TokenResponse,
     AccessTokenResponse,
-    UserResponse,
+    UserResponse
+    
 )
-from app.services.auth_service import register_user, login_user
+from app.services.auth_service import register_user, register_farmer, register_vendor, login_user
 
 router = APIRouter()
 
@@ -27,6 +30,7 @@ REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # seconds
 
 # Set secure=True in production (requires HTTPS)
 COOKIE_SECURE   = not settings.DEBUG
+
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
@@ -49,6 +53,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     )
 
 
+
 def clear_auth_cookies(response: Response):
     """Helper — removes both token cookies (used on logout)."""
     response.delete_cookie(ACCESS_TOKEN_COOKIE,  samesite="lax")
@@ -56,16 +61,33 @@ def clear_auth_cookies(response: Response):
 
 
 
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new account",
-)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
+# @router.post(
+#     "/register",
+#     response_model=UserResponse,
+#     status_code=status.HTTP_201_CREATED,
+#     summary="Register a new account",
+# )
+# def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
-    user = register_user(data, db)
-    return user
+#     user = register_user(data, db)
+#     return user
+
+@router.post("/register/user", summary="Register new user account")
+def user_register(data : UserRegister, db : Session = Depends(get_db)):
+    
+    return register_user(data, db)
+
+
+@router.post("/register/farmer", summary="Register a new Farmer account")
+def farmer_register(data : FarmerRegister, db : Session = Depends(get_db)):
+    
+    return register_farmer(data, db)
+
+
+@router.post("/register/vendor", summary="Register a new vendor account")
+def vendor_register(data : VendorRegister, db : Session = Depends(get_db)):
+    
+    return register_vendor(data, db)
 
 
 @router.post(
@@ -93,6 +115,8 @@ def login(
     )
 
     return result
+
+
 
 
 @router.post(
@@ -140,6 +164,8 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     )
 
     return AccessTokenResponse()
+
+
 
 
 @router.get(
