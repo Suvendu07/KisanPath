@@ -15,7 +15,7 @@ class Farmer(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete = "CASCADE"), unique=True, nullable=False)
     
     
-    fram_name = Column(String(150), nullable=True)
+    farm_name = Column(String(150), nullable=True)
     farm_size_acres = Column(String, nullable=True)
     farm_location = Column(String(200), nullable=True)
     farm_image = Column(String(255), nullable=True)
