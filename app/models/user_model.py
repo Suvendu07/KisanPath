@@ -6,7 +6,6 @@ from app.database import Base
 
 
 class UserRole(str, enum.Enum):
-    ADMIN = "admin"
     USER = "user"
     FARMER = "farmer"
     VENDOR = "vendor"
