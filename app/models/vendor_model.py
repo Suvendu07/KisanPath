@@ -16,8 +16,8 @@ class Vendor(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete = "CASCADE"), unique=True, nullable=False)
     
     
-    bussiness_name = Column(String(150), nullable=False)
-    bussiness_type = Column(String(100), nullable=True)
+    business_name = Column(String(150), nullable=False)
+    business_type = Column(String(100), nullable=True)
     gst_number = Column(String(20), unique=True, nullable=True)
     license_number = Column(String(50), unique=True, nullable=True)
     
@@ -33,7 +33,6 @@ class Vendor(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
  
-    # ── Relationships ──────────────────────────────────────────────────────────
     user          = relationship("User",       back_populates="vendor_profile")
     mandi_prices  = relationship("MandiPrice", back_populates="vendor", cascade="all, delete")
  
