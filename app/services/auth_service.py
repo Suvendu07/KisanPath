@@ -67,18 +67,24 @@ def check_exist(db , email, phone):
 def register_user(data , db : Session):
     
     existing = check_exist(db, data.email, data.phone)
-        
-    new_user = User(**data.model_dump(), role = UserRole.USER)
+    
+    
+    user_data = data.model_dump()
+    
+    hashed_pwd = hash_password(user_data.pop("hashed_password"))
+    
+    new_user = User(**user_data,
+                    hashed_password = hashed_pwd, role = UserRole.USER)
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
     return {
-        "message" : "User register successfully"
+        "message" : "User Register Successfully"
     }
-    
-    
+
+
     
 def register_farmer(data, db):
     
@@ -91,7 +97,7 @@ def register_farmer(data, db):
         full_name=data.full_name,
         email=data.email,
         phone=data.phone,
-        hashed_password=data.hashed_password,
+        hashed_password=hash_password(data.hashed_password),
         adress=data.adress,
         city=data.city,
         state=data.state,
@@ -133,7 +139,7 @@ def register_vendor(data, db: Session):
         full_name=data.full_name,
         email=data.email,
         phone=data.phone,
-        hashed_password=data.hashed_password,
+        hashed_password=hash_password(data.hashed_password),
         adress=data.adress,
         city=data.city,
         state=data.state,
