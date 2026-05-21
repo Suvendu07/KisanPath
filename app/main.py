@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth_route import router as auth_router
 from app.models import user_model, farmer_model, vendor_model, product_model, order_model, feedback_model, mandi_model
 from app.routers.admin_route import router as admin_router
+from app.routers.farmer_route import router as farmer_router
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -27,3 +29,4 @@ def home_page():
     
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(farmer_router)

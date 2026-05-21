@@ -16,13 +16,13 @@ from app.database import get_db
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
-def get_farmer(user : User, db : Session) -> Farmer:
-    farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
+# def get_farmer(user : User, db : Session) -> Farmer:
+#     farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
     
-    if not farmer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Farmer profile not found")
+#     if not farmer:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Farmer profile not found")
     
-    return farmer
+#     return farmer
 
 
 
@@ -44,18 +44,20 @@ def save_upload(file : UploadFile, subfolder : str) -> str:
 
 
 
-def build_profile_response(farmer : Farmer, user : User) -> dict:
-    
-    data = FarmerProfileResponse.model_validate(farmer).model_dump()
-    
-    data["full_name"] = user.full_name
-    data["email"] = user.email
-    data["phone"] = user.phone
-    data["city"] = user.city
-    data["state"] = user.state
-    
-    return data
+def build_profile_response(farmer: Farmer, user: User) -> dict:
 
+    return {
+        "id": farmer.id,
+        "farm_name": farmer.farm_name,
+        "farm_size_acres": farmer.farm_size_acres,
+        "farm_location": farmer.farm_location,
+
+        "full_name": user.full_name,
+        "email": user.email,
+        "phone": user.phone,
+        "city": user.city,
+        "state": user.state
+    }
 
 def product_response(product : Product, db : Session) -> dict:
     
@@ -69,9 +71,12 @@ def product_response(product : Product, db : Session) -> dict:
 
 
 
-def get_dashboard(user : User, farmer : Farmer =  Depends(require_farmer),db : Session = Depends(get_db)):
+def get_dashboard(user, db : Session):
     
-    farmer = get_farmer(user, db)
+    # farmer = get_farmer(user, db)
+    farmer = db.query(Farmer).filter(
+        Farmer.user_id == user.id
+    ).first()
     
     total_products = db.query(Product).filter(Product.farmer_id == farmer.id).count()
     
@@ -89,10 +94,19 @@ def get_dashboard(user : User, farmer : Farmer =  Depends(require_farmer),db : S
     
     
     
-def get_profile(user : User, farmer : Farmer = Depends(require_farmer) , db : Session = Depends(get_db)):
+def get_profile(user, db : Session):
     
+    farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
+    
+    if not farmer:
+        raise HTTPException(
+            status_code=404,
+            detail="Farmer profile not found"
+        )
+
     # farmer = get_farmer(user, db)
     return build_profile_response(farmer, user)
+
 
 
 def update_profile(user : User, payload : FarmerProfileUpdate, farmer : Farmer = Depends(require_farmer) ,db : Session = Depends(get_db)):
