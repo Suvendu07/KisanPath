@@ -12,11 +12,12 @@ from app.schemas.farmer import FarmerProfileUpdate, FarmerProfileResponse, Produ
 from app.core.permision import require_farmer
 from app.database import get_db
 
+
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 def get_farmer(user : User, db : Session) -> Farmer:
-    farmer = db.query(User).filter(Farmer.user_id == user.id).first()
+    farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
     
     if not farmer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Farmer profile not found")
@@ -68,7 +69,7 @@ def product_response(product : Product, db : Session) -> dict:
 
 
 
-def get_dashboard(user : User, farmer : Farmer =  Depends(require_farmer),db : Session = Depends(g)):
+def get_dashboard(user : User, farmer : Farmer =  Depends(require_farmer),db : Session = Depends(get_db)):
     
     farmer = get_farmer(user, db)
     
@@ -76,14 +77,14 @@ def get_dashboard(user : User, farmer : Farmer =  Depends(require_farmer),db : S
     
     active_products = db.query(Product).filter(Product.farmer_id == farmer.id , Product.is_available == True).count()
     
-    total_oders = db.query(OrderItem).join(Product).filter(Product.farmer_id == farmer.id).count()
+    total_orders = db.query(OrderItem).join(Product).filter(Product.farmer_id == farmer.id).count()
     
     return {
         "farmer_name" : user.full_name,
         "is_approved" : farmer.is_approved,
         "total_products" : total_products,
         "active_products" : active_products,
-        "total_orders" : total_oders
+        "total_orders" : total_orders
     }
     
     
@@ -142,9 +143,9 @@ def list_products(farmer : Farmer = Depends(require_farmer), db:Session = Depend
     
     # farmer = get_farmer(user, db)
     
-    prodcts = db.query(Product).filter(Product.farmer_id == farmer.id).all()
+    products = db.query(Product).filter(Product.farmer_id == farmer.id).all()
     
-    return prodcts
+    return products
 
 
 
@@ -166,7 +167,7 @@ def create_products(payload : ProductCreate,farmer : Farmer = Depends(require_fa
     db.refresh(new_product)
     
     return {
-        "message" : "Product crete successfully"
+        "message" : "Product created successfully"
     }
     
     
@@ -201,6 +202,11 @@ def delete_product(product_id : int, farmer : Farmer = Depends(require_farmer), 
     
     product = db.query(Product).filter(Product.id == product_id, Product.farmer_id == farmer.id).first()
     
+    if not product:
+       raise HTTPException(
+         status_code=404,
+         detail="Product not found"
+    )
     
     db.delete(product)
     db.commit()
