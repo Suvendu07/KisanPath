@@ -5,6 +5,8 @@ from app.routers.auth_route import router as auth_router
 from app.models import user_model, farmer_model, vendor_model, product_model, order_model, feedback_model, mandi_model
 from app.routers.admin_route import router as admin_router
 from app.routers.farmer_route import router as farmer_router
+from fastapi.staticfiles import StaticFiles
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,6 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/home")
 def home_page():

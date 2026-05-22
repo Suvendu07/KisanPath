@@ -26,21 +26,29 @@ ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 
-def save_upload(file : UploadFile, subfolder : str) -> str:
-    
+def save_upload(file: UploadFile, subfolder: str) -> str:
+
     if file.content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only JPEG, PNG are allowed")
-    
-    
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPEG, PNG are allowed"
+        )
+
     folder = os.path.join(settings.UPLOAD_DIR, subfolder)
+
     os.makedirs(folder, exist_ok=True)
+
     ext = file.filename.rsplit(".", 1)[-1]
+
     filename = f"{uuid.uuid4()}.{ext}"
+
     filepath = os.path.join(folder, filename)
+
     with open(filepath, "wb") as f:
         f.write(file.file.read())
-        
-    return f"{subfolder}/{filename}"
+
+    return f"/uploads/{subfolder}/{filename}"
+
 
 
 
@@ -109,11 +117,11 @@ def get_profile(user, db : Session):
 
 
 
-def update_profile(user : User, payload : FarmerProfileUpdate, farmer : Farmer = Depends(require_farmer) ,db : Session = Depends(get_db)):
+def update_profile(payload,  farmer , user , db : Session):
     
     # farmer = get_farmer(user , db)
     
-    farmer_fileds = ["farm_name", "farm_size_acres", "farm_location", "addhar_number","kissan_id", "bio"]
+    farmer_fileds = ["farm_name", "farm_size_acres", "farm_location", "aadhar_number","kisan_id", "bio"]
     
     for field in farmer_fileds:
         value = getattr(payload, field)
@@ -140,7 +148,7 @@ def update_profile(user : User, payload : FarmerProfileUpdate, farmer : Farmer =
 
 
 
-def upload_image(image : UploadFile , farmer : Farmer =Depends(require_farmer), db : Session = Depends(get_db)):
+def upload_image(image , farmer , db : Session):
     
     # farmer = get_farmer(user, db)
     path = save_upload(image, "farmer_image")
