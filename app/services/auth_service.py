@@ -1,59 +1,22 @@
 from datetime import datetime
+import os
+import uuid
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status,UploadFile
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User, UserRole
 from app.models.farmer_model import Farmer
 from app.models.vendor_model import Vendor
 from app.core.security import hash_password, verify_password
-from app.schemas.auth import  LoginRequest, TokenResponse, UserRegister, FarmerRegister, VendorRegister
+from app.schemas.auth import  LoginRequest, TokenResponse
+from app.config import settings
 
 
-# def register_user(data: RegisterRequest, db: Session) -> User:
- 
 
-#     # Check duplicate email
-#     existing = db.query(User).filter(User.email == data.email).first()
-#     if existing:
-#         raise HTTPException(
-#             status_code=status.HTTP_409_CONFLICT,
-#             detail="An account with this email already exists."
-#         )
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
-#     # Check duplicate phone
-#     if data.phone:
-#         existing_phone = db.query(User).filter(User.phone == data.phone).first()
-#         if existing_phone:
-#             raise HTTPException(
-#                 status_code=status.HTTP_409_CONFLICT,
-#                 detail="An account with this phone number already exists."
-#             )
 
-#     # Create base user
-#     new_user = User(
-#         full_name       = data.full_name,
-#         email           = data.email,
-#         phone           = data.phone,
-#         hashed_password = hash_password(data.password),
-#         role            = data.role,
-#     )
-#     db.add(new_user)
-#     db.flush()   # get new_user.id without committing yet
-
-#     # Auto-create role-specific profile
-#     if data.role == UserRole.FARMER:
-#         db.add(Farmer(user_id=new_user.id))
-
-#     elif data.role == UserRole.VENDOR:
-#         db.add(Vendor(
-#             user_id       = new_user.id,
-#             business_name = data.full_name,   # placeholder, vendor can update later
-#         ))
-
-#     db.commit()
-#     db.refresh(new_user)
-#     return new_user
 
 def check_exist(db , email, phone):
     existing = db.query(User).filter((User.email == email) | (User.phone == phone)).first()
@@ -63,8 +26,46 @@ def check_exist(db , email, phone):
     
     
     
+def save_upload(file: UploadFile, subfolder: str) -> str:
 
-def register_user(data , db : Session):
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPEG, PNG are allowed"
+        )
+
+    folder = os.path.join(settings.UPLOAD_DIR, subfolder)
+
+    os.makedirs(folder, exist_ok=True)
+
+    ext = file.filename.rsplit(".", 1)[-1]
+
+    filename = f"{uuid.uuid4()}.{ext}"
+
+    filepath = os.path.join(folder, filename)
+
+    with open(filepath, "wb") as f:
+        f.write(file.file.read())
+
+    return f"/uploads/{subfolder}/{filename}"
+
+
+
+def upload_image(image , user , db : Session):
+    
+    # farmer = get_farmer(user, db)
+    path = save_upload(image, "profile_image")
+    user.profile_image = path
+    db.commit()
+    
+    return {
+        "message" : "Image upload successfully"
+    }
+    
+
+
+
+def register_user(data , image , db : Session):
     
     existing = check_exist(db, data.email, data.phone)
     
@@ -73,8 +74,17 @@ def register_user(data , db : Session):
     
     hashed_pwd = hash_password(user_data.pop("hashed_password"))
     
-    new_user = User(**user_data,
-                    hashed_password = hashed_pwd, role = UserRole.USER)
+    profile_image = None
+
+    if image:
+        profile_image = save_upload(image, "profile_image")
+    
+    new_user = User(
+        **user_data,
+        hashed_password = hashed_pwd,
+        role = UserRole.USER,
+        profile_image = profile_image
+    )
     
     db.add(new_user)
     db.commit()
@@ -85,12 +95,18 @@ def register_user(data , db : Session):
     }
 
 
+
+
     
-def register_farmer(data, db):
+def register_farmer(data, image, db):
     
     
     existing = check_exist(db, data.email, data.phone)
 
+    profile_image = None
+
+    if image:
+        profile_image = save_upload(image, "profile_image")
 
     # Create User First
     new_user = User(
@@ -102,12 +118,12 @@ def register_farmer(data, db):
         city=data.city,
         state=data.state,
         pincode=data.pincode,
-        role=UserRole.FARMER
+        role=UserRole.FARMER,
+        profile_image=profile_image
     )
 
     db.add(new_user)
 
-    # Generate user.id before commit
     db.flush()
 
     # Create Farmer Profile
@@ -130,9 +146,16 @@ def register_farmer(data, db):
     
     
     
-def register_vendor(data, db: Session):
+    
+    
+def register_vendor(data, image, db: Session):
 
     existing = check_exist(db, data.email, data.phone)
+
+    profile_image = None
+
+    if image:
+        profile_image = save_upload(image, "profile_image")
 
     # Create User
     new_user = User(
@@ -144,15 +167,15 @@ def register_vendor(data, db: Session):
         city=data.city,
         state=data.state,
         pincode=data.pincode,
-        role=UserRole.VENDOR
+        role=UserRole.VENDOR,
+        profile_image=profile_image
     )
 
     db.add(new_user)
 
-    # Generate user.id
     db.flush()
 
-    # Create Vendor Profile
+    # Create Vendor
     new_vendor = Vendor(
         user_id=new_user.id,
         business_name=data.business_name,
@@ -170,7 +193,8 @@ def register_vendor(data, db: Session):
     return {
         "message": "Vendor Registered Successfully"
     }
-
+    
+    
 
 
 
