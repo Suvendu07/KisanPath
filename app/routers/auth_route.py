@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -21,6 +21,8 @@ from app.schemas.auth import (
     
 )
 from app.services.auth_service import register_user, register_farmer, register_vendor, login_user
+
+
 
 router = APIRouter()
 
@@ -61,33 +63,39 @@ def clear_auth_cookies(response: Response):
 
 
 
-# @router.post(
-#     "/register",
-#     response_model=UserResponse,
-#     status_code=status.HTTP_201_CREATED,
-#     summary="Register a new account",
-# )
-# def register(data: RegisterRequest, db: Session = Depends(get_db)):
-
-#     user = register_user(data, db)
-#     return user
 
 @router.post("/register/user", summary="Register new user account")
-def user_register(data : UserRegister, db : Session = Depends(get_db)):
+def user_register(
+    data: UserRegister = Depends(UserRegister.as_form),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     
-    return register_user(data, db)
+    return register_user(data, image, db)
+
 
 
 @router.post("/register/farmer", summary="Register a new Farmer account")
-def farmer_register(data : FarmerRegister, db : Session = Depends(get_db)):
+def farmer_register(
+    data: FarmerRegister = Depends(FarmerRegister.as_form),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     
-    return register_farmer(data, db)
+    return register_farmer(data, image, db)
+
+
 
 
 @router.post("/register/vendor", summary="Register a new vendor account")
-def vendor_register(data : VendorRegister, db : Session = Depends(get_db)):
+def vendor_register(
+    data: VendorRegister = Depends(VendorRegister.as_form),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     
-    return register_vendor(data, db)
+    return register_vendor(data, image, db)
+
 
 
 @router.post(
