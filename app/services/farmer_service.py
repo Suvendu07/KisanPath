@@ -211,7 +211,7 @@ def create_products(payload ,farmer,db : Session):
     
     
 
-def update_product(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(require_farmer) , db : Session = Depends(get_db)):
+def update_product(product_id , payload, farmer, db : Session):
     
     # farmer = get_farmer(user, db)
     

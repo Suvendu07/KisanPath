@@ -11,12 +11,12 @@ from app.core.permision import require_farmer
 
 
 
-router = APIRouter()
+router = APIRouter(prefix="/farmer")
 
 
 
 
-@router.get("/farmer/dashboard")
+@router.get("/dashboard")
 def dashboard(
     current_user: User = Depends(require_farmer),
     db: Session = Depends(get_db)
@@ -27,7 +27,7 @@ def dashboard(
 
 
 
-@router.get("/farmer/profile")
+@router.get("/profile")
 def profile(current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
     
     return get_profile(current_user, db)
@@ -35,7 +35,7 @@ def profile(current_user : User = Depends(require_farmer), db : Session = Depend
 
 
 
-@router.put("/farmer/update/profile")
+@router.put("/update/profile")
 def update(payload : FarmerProfileUpdate,farmer : Farmer = Depends(get_farmer), user : User = Depends(require_farmer), db : Session = Depends(get_db)):
     
     
@@ -44,7 +44,7 @@ def update(payload : FarmerProfileUpdate,farmer : Farmer = Depends(get_farmer), 
 
 
 
-@router.post("/farmer/upload/image")
+@router.post("/upload/image")
 def upload(image : UploadFile, farmer : Farmer = Depends(get_farmer),current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
         
     return upload_image(image, farmer, db)
@@ -52,14 +52,22 @@ def upload(image : UploadFile, farmer : Farmer = Depends(get_farmer),current_use
 
 
 
-@router.get("/farmer/products")
+@router.get("/products")
 def list_product(farmer : Farmer = Depends(get_farmer),db : Session = Depends(get_db)):
         
     return list_products(farmer, db)
 
 
 
-@router.post("/farmer/create_products")
+@router.post("/create_products")
 def products(payload : ProductCreate, farmer : Farmer = Depends(get_farmer) ,db: Session = Depends(get_db)):
     
     return create_products(payload, farmer, db)
+
+
+
+
+@router.post("/farmer/update_products")
+def update(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
+    
+    return update_product(product_id, payload,farmer,db)
