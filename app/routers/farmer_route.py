@@ -67,7 +67,7 @@ def products(payload : ProductCreate = Depends(ProductCreate.as_form), image : U
 
 
 
-@router.put("/farmer/products/update")
+@router.put("/products/update")
 def update(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
     
     return update_product(product_id, payload,farmer,db)
@@ -75,14 +75,14 @@ def update(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(
 
 
 
-@router.delete("/farmer/products/delete")
+@router.delete("/products/delete")
 def delete(product_id : int, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
     
     return delete_product(product_id, farmer, db)
 
 
 
-@router.get("/farmer/orders")
+@router.get("/orders")
 def get_orders(farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
     
     return get_farmer_orders(farmer, db)
