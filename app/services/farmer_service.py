@@ -263,23 +263,6 @@ def delete_product(product_id : int, farmer : Farmer = Depends(require_farmer), 
     
     
 
-def upload_product_image(product_id: int, file: UploadFile,farmer : Farmer = Depends(require_farmer) ,db: Session = Depends(get_db)) -> dict:
-    # farmer  = get_farmer_or_404(user, db)
-    product = db.query(Product).filter(
-        Product.id        == product_id,
-        Product.farmer_id == farmer.id,
-    ).first()
- 
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found.")
- 
-    path          = save_upload(file, "product_images")
-    product.image = path
-    db.commit()
-    return {"message": "Product image updated.", "image_url": f"/{path}"}
- 
- 
-
 
 def get_farmer_orders(farmer : Farmer = Depends(require_farmer),  db: Session  = Depends(get_db)) -> list:
     # farmer = get_farmer_or_404(user, db)

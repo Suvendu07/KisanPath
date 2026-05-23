@@ -69,29 +69,51 @@ class FarmerProfileResponse(BaseModel):
 #             raise ValueError("Stock quantity cannot be negative.")
 #         return v
 
+class ProductCreate(BaseModel):
+    name:str
+    description:Optional[str]  = None
+    category:ProductCategory = ProductCategory.OTHER
+    price_per_unit: float
+    unit:ProductUnit= ProductUnit.KG
+    stock_quantity: float= 0.0
+    is_organic:bool= False
 
-@classmethod
-def as_form(
-    cls,
-    name : str = Form(...),
-    description : Optional[str] = Form(None),
-    category : ProductCategory = Form(ProductCategory.OTHER),
-    price_per_unit : float = Form(...),
-    unit : ProductUnit = Form(ProductUnit.KG),
-    stock_quantity : float = Form(0.0),
-    is_organic : bool = Form(False),
-):
-    
-    return cls(
-        name = name,
-        description = description,
-        category = category,
-        price_per_unit = price_per_unit,
-        unit = unit,
-        stock_quantity = stock_quantity,
-        is_organic = is_organic,
-    )
+    @field_validator("price_per_unit")
+    @classmethod
+    def price_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError("Price must be greater than zero.")
+        return v
 
+    @field_validator("stock_quantity")
+    @classmethod
+    def stock_must_be_non_negative(cls, v):
+        if v < 0:
+            raise ValueError("Stock quantity cannot be negative.")
+        return v
+
+
+    @classmethod
+    def as_form(
+        cls,
+        name: str = Form(...),
+        description: Optional[str] = Form(None),
+        category: ProductCategory = Form(ProductCategory.OTHER),
+        price_per_unit: float = Form(...),
+        unit: ProductUnit = Form(ProductUnit.KG),
+        stock_quantity: float = Form(0.0),
+        is_organic: bool = Form(False),
+    ):
+
+        return cls(
+            name=name,
+            description=description,
+            category=category,
+            price_per_unit=price_per_unit,
+            unit=unit,
+            stock_quantity=stock_quantity,
+            is_organic=is_organic,
+        )
 
 
 class ProductUpdate(BaseModel):

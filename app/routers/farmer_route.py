@@ -35,7 +35,7 @@ def profile(current_user : User = Depends(require_farmer), db : Session = Depend
 
 
 
-@router.put("/update/profile")
+@router.put("/profile/update")
 def update(payload : FarmerProfileUpdate,farmer : Farmer = Depends(get_farmer), user : User = Depends(require_farmer), db : Session = Depends(get_db)):
     
     
@@ -59,15 +59,15 @@ def list_product(farmer : Farmer = Depends(get_farmer),db : Session = Depends(ge
 
 
 
-@router.post("/create_products")
-def products(payload : ProductCreate, image : UploadFile = File(None),farmer : Farmer = Depends(get_farmer) ,db: Session = Depends(get_db)):
+@router.post("/products/create")
+def products(payload : ProductCreate = Depends(ProductCreate.as_form), image : UploadFile = File(None),farmer : Farmer = Depends(get_farmer) ,db: Session = Depends(get_db)):
     
     return create_products(payload,image, farmer, db)
 
 
 
 
-@router.post("/farmer/update_products")
+@router.post("/farmer/products/update")
 def update(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
     
     return update_product(product_id, payload,farmer,db)
