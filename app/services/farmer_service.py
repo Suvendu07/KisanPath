@@ -16,13 +16,25 @@ from app.database import get_db
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
-# def get_farmer(user : User, db : Session) -> Farmer:
-#     farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
-    
-#     if not farmer:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Farmer profile not found")
-    
-#     return farmer
+
+
+def get_farmer(
+    current_user: User = Depends(require_farmer),
+    db: Session = Depends(get_db)
+):
+
+    farmer = db.query(Farmer).filter(
+        Farmer.user_id == current_user.id
+    ).first()
+
+    if not farmer:
+        raise HTTPException(
+            status_code=404,
+            detail="Farmer profile not found"
+        )
+
+    return farmer
+
 
 
 
@@ -161,7 +173,9 @@ def upload_image(image , farmer , db : Session):
     
     
     
-def list_products(farmer : Farmer = Depends(require_farmer), db:Session = Depends(get_db)):
+    
+    
+def list_products(farmer , db:Session):
     
     # farmer = get_farmer(user, db)
     
@@ -171,7 +185,9 @@ def list_products(farmer : Farmer = Depends(require_farmer), db:Session = Depend
 
 
 
-def create_products(payload : ProductCreate,farmer : Farmer = Depends(require_farmer),db : Session = Depends(get_db)):
+
+
+def create_products(payload ,farmer,db : Session):
     
     # farmer = get_farmer(user , db)
     
