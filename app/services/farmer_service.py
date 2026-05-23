@@ -243,7 +243,7 @@ def update_product(product_id , payload, farmer, db : Session):
     
     
     
-def delete_product(product_id : int, farmer : Farmer = Depends(require_farmer), db : Session = Depends(get_db)):
+def delete_product(product_id , farmer , db : Session):
     
     product = db.query(Product).filter(Product.id == product_id, Product.farmer_id == farmer.id).first()
     

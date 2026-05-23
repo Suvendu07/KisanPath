@@ -6,7 +6,7 @@ from app.models.user_model import User
 from app.models.farmer_model import Farmer
 from app.models.product_model import Product
 from app.schemas.farmer import FarmerProfileUpdate, ProductCreate, ProductUpdate, ProductResponse
-from app.services.farmer_service import get_farmer, get_dashboard, get_profile, update_profile, upload_image, list_products,create_products, update_product, delete_product
+from app.services.farmer_service import get_farmer, get_dashboard, get_profile, update_profile, upload_image, list_products,create_products, update_product, delete_product, get_farmer_orders
 from app.core.permision import require_farmer
 
 
@@ -67,7 +67,22 @@ def products(payload : ProductCreate = Depends(ProductCreate.as_form), image : U
 
 
 
-@router.post("/farmer/products/update")
+@router.put("/farmer/products/update")
 def update(product_id : int, payload : ProductUpdate, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
     
     return update_product(product_id, payload,farmer,db)
+
+
+
+
+@router.delete("/farmer/products/delete")
+def delete(product_id : int, farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
+    
+    return delete_product(product_id, farmer, db)
+
+
+
+@router.get("/farmer/orders")
+def get_orders(farmer : Farmer = Depends(get_farmer), db : Session = Depends(get_db)):
+    
+    return get_farmer_orders(farmer, db)
