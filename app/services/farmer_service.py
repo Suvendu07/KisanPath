@@ -187,16 +187,23 @@ def list_products(farmer , db:Session):
 
 
 
-def create_products(payload ,farmer,db : Session):
+def create_products(payload,image,farmer,db : Session):
     
     # farmer = get_farmer(user , db)
     
     if not farmer.is_approved:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your farmer account must be approved by admin before listing products.")
     
+    image_path = None
     
+    if image:
+        image_path = save_upload(image, "product_images")
+        
+        
+        
     new_product = Product( 
         farmer_id = farmer.id,
+        image = image_path,
         **payload.model_dump()
     )
     

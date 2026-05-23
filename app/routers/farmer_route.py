@@ -60,9 +60,9 @@ def list_product(farmer : Farmer = Depends(get_farmer),db : Session = Depends(ge
 
 
 @router.post("/create_products")
-def products(payload : ProductCreate, farmer : Farmer = Depends(get_farmer) ,db: Session = Depends(get_db)):
+def products(payload : ProductCreate, image : UploadFile = File(None),farmer : Farmer = Depends(get_farmer) ,db: Session = Depends(get_db)):
     
-    return create_products(payload, farmer, db)
+    return create_products(payload,image, farmer, db)
 
 
 
