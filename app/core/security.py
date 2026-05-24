@@ -2,30 +2,34 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-
+import bcrypt
+from jose import JWTError, jwt
 from app.config import settings
-from fastapi import Request
 
 
 
 access_token_expire = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
 
 
+def hash_password(password: str) -> str:
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    # bcrypt expects bytes, so we encode the password
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
-def hash_password(password : str) -> str:
-    
-    return pwd_context.hash(password)
 
 
-
-
-
-def verify_password(plain_password:str, hash_password: str) -> bool:
-    
-    return pwd_context.verify(plain_password, hash_password)
+def verify_password(plain_password: str, hash_password: str) -> bool:
+    try:
+        # Check password against hash
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'), 
+            hash_password.encode('utf-8')
+        )
+    except Exception:
+        return False
 
 
 

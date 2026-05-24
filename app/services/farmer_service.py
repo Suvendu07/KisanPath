@@ -71,12 +71,15 @@ def build_profile_response(farmer: Farmer, user: User) -> dict:
         "farm_name": farmer.farm_name,
         "farm_size_acres": farmer.farm_size_acres,
         "farm_location": farmer.farm_location,
+        "farm_image": farmer.farm_image,
+        "is_approved": farmer.is_approved,
 
         "full_name": user.full_name,
         "email": user.email,
         "phone": user.phone,
         "city": user.city,
-        "state": user.state
+        "state": user.state,
+        "profile_image": user.profile_image
     }
 
 def product_response(product : Product, db : Session) -> dict:

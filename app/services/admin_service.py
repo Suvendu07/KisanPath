@@ -120,6 +120,7 @@ def list_farmers(is_approved: bool, db: Session) -> list:
             "farm_name":     f.farm_name,
             "farm_location": f.farm_location,
             "is_approved":   f.is_approved,
+            "kisan_id" : f.kisan_id,
             "created_at":    f.created_at,
         }
         for f in query.all()
@@ -151,14 +152,17 @@ def list_vendors(is_approved: bool, db: Session) -> list:
 
     return [
         {
-            "vendor_id":     v.id,
-            "user_id":       v.user_id,
-            "full_name":     v.user.full_name  if v.user else None,
-            "email":         v.user.email      if v.user else None,
-            "business_name": v.business_name,
-            "mandi_name":    v.mandi_name,
-            "is_approved":   v.is_approved,
-            "created_at":    v.created_at,
+            "vendor_id":      v.id,
+            "user_id":        v.user_id,
+            "full_name":      v.user.full_name  if v.user else None,
+            "email":          v.user.email      if v.user else None,
+            "business_name":  v.business_name,
+            "business_type":  v.business_type,
+            "gst_number":     v.gst_number,
+            "license_number": v.license_number,
+            "mandi_name":     v.mandi_name,
+            "is_approved":    v.is_approved,
+            "created_at":     v.created_at,
         }
         for v in query.all()
     ]
