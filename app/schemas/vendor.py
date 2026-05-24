@@ -6,57 +6,58 @@ from app.models.mandi_model import PriceUnit
 
 
 class VendorProfileUpdate(BaseModel):
-    business_name:    Optional[str] = None
-    business_type:    Optional[str] = None
-    gst_number:       Optional[str] = None
-    license_number:   Optional[str] = None
-    mandi_name:       Optional[str] = None
-    mandi_location:   Optional[str] = None
-    bio:              Optional[str] = None
+    business_name:Optional[str] = None
+    business_type:Optional[str] = None
+    gst_number:Optional[str] = None
+    license_number:Optional[str] = None
+    mandi_name:Optional[str] = None
+    mandi_location:Optional[str] = None
+    bio:Optional[str] = None
 
     # From the base User table
-    full_name:        Optional[str] = None
-    phone:            Optional[str] = None
-    address:          Optional[str] = None
-    city:             Optional[str] = None
-    state:            Optional[str] = None
-    pincode:          Optional[str] = None
+    full_name:Optional[str] = None
+    phone:Optional[str] = None
+    address:Optional[str] = None
+    city:Optional[str] = None
+    state:Optional[str] = None
+    pincode:Optional[str] = None
 
 
 class VendorProfileResponse(BaseModel):
-    id:               int
-    business_name:    str
-    business_type:    Optional[str]
-    gst_number:       Optional[str]
-    license_number:   Optional[str]
-    mandi_name:       Optional[str]
-    mandi_location:   Optional[str]
-    is_approved:      bool
-    bio:              Optional[str]
-    created_at:       datetime
+    id:int
+    business_name:str
+    business_type:Optional[str]
+    gst_number:Optional[str]
+    license_number:Optional[str]
+    mandi_name:Optional[str]
+    mandi_location:Optional[str]
+    is_approved:bool
+    bio:Optional[str]
+    created_at:datetime
 
     # Nested user info
-    full_name:        str
-    email:            str
-    phone:            Optional[str]
-    city:             Optional[str]
-    state:            Optional[str]
+    full_name: str
+    email:str
+    phone:Optional[str]
+    city:Optional[str]
+    state:Optional[str]
+    # profile_image : Optional
 
     model_config = {"from_attributes": True}
 
 
 class MandiPriceCreate(BaseModel):
-    crop_name:      str
-    crop_variety:   Optional[str]  = None
-    min_price:      float
-    max_price:      float
-    modal_price:    float
-    unit:           PriceUnit       = PriceUnit.QUINTAL
-    mandi_name:     str
+    crop_name:str
+    crop_variety:Optional[str]  = None
+    min_price:float
+    max_price:float
+    modal_price:float
+    unit:PriceUnit= PriceUnit.QUINTAL
+    mandi_name:str
     mandi_location: Optional[str]  = None
-    state:          Optional[str]  = None
-    price_date:     date
-    notes:          Optional[str]  = None
+    state:Optional[str]  = None
+    price_date:date
+    notes:Optional[str]  = None
 
     @field_validator("max_price")
     @classmethod
@@ -78,34 +79,34 @@ class MandiPriceCreate(BaseModel):
 
 
 class MandiPriceUpdate(BaseModel):
-    crop_name:      Optional[str]       = None
-    crop_variety:   Optional[str]       = None
-    min_price:      Optional[float]     = None
-    max_price:      Optional[float]     = None
-    modal_price:    Optional[float]     = None
-    unit:           Optional[PriceUnit] = None
-    mandi_name:     Optional[str]       = None
-    mandi_location: Optional[str]       = None
-    state:          Optional[str]       = None
-    price_date:     Optional[date]      = None
-    notes:          Optional[str]       = None
+    crop_name:Optional[str]= None
+    crop_variety:Optional[str]= None
+    min_price:Optional[float] = None
+    max_price:Optional[float]= None
+    modal_price:Optional[float]= None
+    unit:Optional[PriceUnit] = None
+    mandi_name:Optional[str]= None
+    mandi_location: Optional[str]= None
+    state:Optional[str]= None
+    price_date:Optional[date]= None
+    notes:Optional[str]= None
 
 
 class MandiPriceResponse(BaseModel):
-    id:             int
-    vendor_id:      int
-    crop_name:      str
-    crop_variety:   Optional[str]
-    min_price:      float
-    max_price:      float
-    modal_price:    float
-    unit:           PriceUnit
-    mandi_name:     str
+    id:int
+    vendor_id:int
+    crop_name:str
+    crop_variety:Optional[str]
+    min_price:float
+    max_price:float
+    modal_price:float
+    unit:PriceUnit
+    mandi_name:str
     mandi_location: Optional[str]
-    state:          Optional[str]
-    price_date:     date
-    notes:          Optional[str]
-    created_at:     datetime
+    state:Optional[str]
+    price_date:date
+    notes:Optional[str]
+    created_at:datetime
 
     # Vendor info for display
     vendor_name:    Optional[str] = None
