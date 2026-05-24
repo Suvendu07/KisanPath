@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
-from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile
+from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices
 from app.models.user_model import User
-from app.core.permision import require_vendor
+from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
 from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate
 
@@ -34,3 +34,16 @@ def profile(current_user : User = Depends(require_vendor), db : Session = Depend
 def profile_update(payload : VendorProfileUpdate, current_user : User = Depends(require_vendor), db : Session = Depends(get_db)):
     
     return update_profile(payload, current_user, db)
+
+
+
+
+@router.get("/mandi-prices/all", summary="[Public] All mandi prices")
+def all_mandi_prices(
+    crop_name:    str  = None,
+    state:        str  = None,
+    current_user: User    = Depends(get_current_user),
+    db:           Session = Depends(get_db),
+):
+    return get_all_prices(crop_name, state, db)
+ 

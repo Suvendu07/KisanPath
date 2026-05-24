@@ -52,6 +52,15 @@ def build_profile_response(user : User, vendor : Vendor):
 
 
 
+def build_price_response(price: MandiPrice, db: Session) -> dict:
+    data   = MandiPriceResponse.model_validate(price).model_dump()
+    vendor = db.query(Vendor).filter(Vendor.id == price.vendor_id).first()
+    if vendor and vendor.user:
+        data["vendor_name"] = vendor.user.full_name
+    return data
+
+
+
 def get_dashboard(user, db :Session):
     
     vendor = get_vendor(user, db)
@@ -114,3 +123,13 @@ def update_profile(payload, current_user , db : Session):
 
 
 
+
+def get_all_prices(crop_name: str, state: str, db: Session) -> list:
+    """Public — no role restriction. Farmers and users can view market rates."""
+    query = db.query(MandiPrice)
+    if crop_name:
+        query = query.filter(MandiPrice.crop_name.ilike(f"%{crop_name}%"))
+    if state:
+        query = query.filter(MandiPrice.state.ilike(f"%{state}%"))
+    prices = query.order_by(MandiPrice.price_date.desc()).all()
+    return [build_price_response(p, db) for p in prices]
