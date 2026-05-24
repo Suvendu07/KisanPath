@@ -29,16 +29,26 @@ def get_vendor(current_user : User = Depends(require_vendor), db : Session = Dep
 
 def build_profile_response(user : User, vendor : Vendor):
     
-    data = VendorProfileResponse.model_validate(vendor).model_dump()
+
+    return {
+        
+    "business_name": vendor.business_name,
+    "business_type":vendor.business_type,
+    "gst_number":vendor.gst_number,
+    "license_number":vendor.license_number,
+    "mandi_name":vendor.mandi_name,
+    "mandi_location":vendor.mandi_location,
+    "bio":vendor.bio,
+
+
+    "full_name" : user.full_name,
+    "email" : user.email,
+    "phone": user.phone,
+    "city": user.city,
+    "state" :user.state,
+    "profile_image" : user.profile_image,
     
-    data["full_name"] = user.full_name,
-    data["email"] = user.email,
-    data["phone"] = user.phone,
-    data["city"] = user.city,
-    data["state"] = user.state
-    data["profile_image"] = user.profile_image
-    
-    return data
+    }
 
 
 
@@ -59,7 +69,7 @@ def get_dashboard(user, db :Session):
         "business_name" : vendor.business_name,
         "is_approved" : vendor.is_approved,
         "total_prices" : total_prices,
-        "today_prices" : today_prices
+        "today_prices" : today_prices,
     }
     
 
@@ -68,4 +78,39 @@ def get_profile(user, db : Session):
     
     vendor = get_vendor(user, db)
     
-    return build_profile_response(vendor, user)
+    return build_profile_response(user, vendor)
+
+
+
+
+def update_profile(payload, current_user , db : Session):
+    
+    vendor = get_vendor(current_user, db)
+    
+    
+    vendor_fields = ["business_name","business_type", "gst_number", "license_number", "mandi_name", "mandi_location", "bio"]
+    
+    for field in vendor_fields:
+        
+        value = getattr(payload, field)
+        
+        if value is not None:
+            setattr(vendor, field, value)
+            
+            
+    user_fields = ["full_name", "phone", "address", "city", "state", "pincode"]
+    
+    for field in user_fields:
+        value = getattr(payload, field)
+        
+        if value is not None:
+            setattr(vendor, field, value)
+            
+            
+    db.commit()
+    db.refresh(vendor)
+    
+    return {"message" : "Profile update successfully"}
+
+
+
