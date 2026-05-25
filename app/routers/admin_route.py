@@ -12,7 +12,8 @@ from app.schemas.admin import (
 )
 from app.services import admin_service
 
-router = APIRouter(prefix="/admin")
+router = APIRouter(prefix="/admin",
+                   tags=["Admin"])
 
 
 

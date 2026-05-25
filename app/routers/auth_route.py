@@ -24,7 +24,7 @@ from app.services.auth_service import register_user, register_farmer, register_v
 
 
 
-router = APIRouter()
+router = APIRouter(prefix="/auth",tags=["Authentication"])
 
 
 ACCESS_MAX_AGE  = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60   # seconds
