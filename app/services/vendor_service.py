@@ -141,7 +141,7 @@ def list_own_prices(user , db : Session):
     
     vendor = get_vendor(user, db)
     
-    prices = db.query(MandiPrice).filter(MandiPrice.user_id == vendor.id).order_by(MandiPrice.price_date.desc()).all()
+    prices = db.query(MandiPrice).filter(MandiPrice.vendor_id == vendor.id).order_by(MandiPrice.price_date.desc()).all()
     
     return [build_price_response(p, db) for p in prices]
 
