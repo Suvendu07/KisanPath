@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
-from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices
+from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices, list_own_prices,create_price
 from app.models.user_model import User
 from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
-from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate
+from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate,MandiPriceCreate, MandiPriceUpdate
 
 
 
@@ -46,4 +46,20 @@ def all_mandi_prices(
     db:           Session = Depends(get_db),
 ):
     return get_all_prices(crop_name, state, db)
- 
+
+
+
+
+@router.get("/own-price")
+def get_own_price(user : User = Depends(require_vendor), db : Session = Depends(get_db)):
+    
+    return list_own_prices(user, db)
+
+
+
+
+
+@router.post("/create/price")
+def set_price(payload : MandiPriceCreate, current_user : User = Depends(require_vendor), db : Session = Depends(get_db)):
+    
+    return create_price(payload, current_user, db)

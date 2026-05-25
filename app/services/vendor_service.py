@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import date
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends,status
 from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate, MandiPriceCreate,MandiPriceUpdate, MandiPriceResponse
 from app.database import get_db
 from app.models.user_model import User
@@ -133,3 +133,82 @@ def get_all_prices(crop_name: str, state: str, db: Session) -> list:
         query = query.filter(MandiPrice.state.ilike(f"%{state}%"))
     prices = query.order_by(MandiPrice.price_date.desc()).all()
     return [build_price_response(p, db) for p in prices]
+
+
+
+
+def list_own_prices(user , db):
+    
+    vendor = get_vendor(user, db)
+    
+    prices = db.query(MandiPrice).filter(MandiPrice.user_id == vendor.id).order_by(MandiPrice.price_date.desc()).all()
+    
+    return [build_price_response(p, db) for p in prices]
+
+
+
+
+
+def create_price(payload, user, db):
+    
+    vendor = get_vendor(user, db)
+    
+    if not vendor.is_approved:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your vendor account must be approved by admin before posting prices")
+    
+    
+    prices = MandiPrice(vendor_id =vendor.id, **payload.model_dump())
+    
+    db.add(prices)
+    db.commit()
+    db.refresh(prices)
+    
+    return {
+        "message" : "Price set successfully"
+    }
+    
+    
+    
+    
+def update_price(payload, price_id , user, db):
+    
+    vendor = get_vendor(user, db)
+    
+    price = db.query(MandiPrice).filter(MandiPrice.id == price_id, MandiPrice.vendor_id == vendor.id).first()
+    
+    
+    
+    if not price:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mandi price entry not found")
+    
+    
+    for field, value in payload.model_dump(exclude_none = True).items():
+        setattr(price, field, value)
+        
+        
+    db.commit()
+    db.refresh(price)
+    
+    return {
+        "message" : "Price updated successfully"
+    }
+    
+    
+    
+def delete_Price(price_id, user, db):
+    
+    vendor = get_vendor(user, db)
+    
+    price = db.query(MandiPrice).filter(MandiPrice.id == price_id, MandiPrice.vendor_id == vendor.id).first()
+    
+    
+    if not price:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="price not found")
+    
+    
+    db.delete(price)
+    db.commit()
+    
+    return {
+        "message" : "Price deleted successfully"
+    }
