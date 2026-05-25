@@ -63,3 +63,13 @@ def get_own_price(user : User = Depends(require_vendor), db : Session = Depends(
 def set_price(payload : MandiPriceCreate, current_user : User = Depends(require_vendor), db : Session = Depends(get_db)):
     
     return create_price(payload, current_user, db)
+
+
+
+
+@router.put("/update/price")
+def price_update(payload : MandiPriceUpdate, price_id : int, current_user : User = Depends(require_vendor), db : Session = Depends(get_db)):
+    
+    return update_price(payload, price_id, current_user, db)
+
+
