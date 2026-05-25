@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
-from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices, list_own_prices,create_price
+from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices, list_own_prices,create_price, delete_Price, update_price
 from app.models.user_model import User
 from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
