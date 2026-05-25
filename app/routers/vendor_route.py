@@ -73,3 +73,10 @@ def price_update(payload : MandiPriceUpdate, price_id : int, current_user : User
     return update_price(payload, price_id, current_user, db)
 
 
+
+
+
+@router.delete("/delete/price")
+def price_delete(price_id : int, currnt_user : User, db : Session = Depends(get_db)):
+    
+    return delete_Price(price_id, currnt_user, db)

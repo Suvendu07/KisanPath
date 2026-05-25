@@ -137,7 +137,7 @@ def get_all_prices(crop_name: str, state: str, db: Session) -> list:
 
 
 
-def list_own_prices(user , db):
+def list_own_prices(user , db : Session):
     
     vendor = get_vendor(user, db)
     
@@ -149,7 +149,7 @@ def list_own_prices(user , db):
 
 
 
-def create_price(payload, user, db):
+def create_price(payload, user, db : Session):
     
     vendor = get_vendor(user, db)
     
@@ -170,7 +170,7 @@ def create_price(payload, user, db):
     
     
     
-def update_price(payload, price_id , user, db):
+def update_price(payload, price_id , user, db : Session):
     
     vendor = get_vendor(user, db)
     
@@ -195,7 +195,7 @@ def update_price(payload, price_id , user, db):
     
     
     
-def delete_Price(price_id, user, db):
+def delete_Price(price_id, user, db: Session):
     
     vendor = get_vendor(user, db)
     
