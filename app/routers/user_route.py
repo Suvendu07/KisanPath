@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
-from app.services.user_service import get_dashboard, get_profile, update_profile
+from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product
 from app.core.permision import require_user
 from app.database import get_db
 
@@ -33,3 +33,11 @@ def profile(current_user : User = Depends(require_user)):
 def update(payload : UserProfileUpdate, user : User = Depends(require_user), db : Session = Depends(get_db)):
     
     return update_profile(payload, user, db)
+
+
+
+
+@router.get("/browse-product")
+def browse(category : str = None, search : str = None, min_price : float = None, max_price : float = None, is_organic : bool = None, db : Session = Depends(get_db)):
+    
+    return browse_product(category, search, min_price, max_price, is_organic, db)

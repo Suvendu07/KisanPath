@@ -65,3 +65,50 @@ def update_profile(payload, user , db):
     return {
         "message" : "Profile updated successfully"
     }
+    
+    
+    
+
+def browse_product(category, search, min_price, max_price, is_organic, db : Session):
+    
+    query = db.query(Product).filter(Product.is_available == True, Product.stock_quantity > 0,)
+    
+    
+    if category:
+        query = query.filter(Product.category == category)
+        
+    if search:
+            query = query.filter(Product.name.ilike(f"%{search}%"))
+            
+    if min_price:
+        query = query.filter(Product.price_per_unit >= min_price)
+        
+    if max_price is not None:
+        query = query.filter(Product.price_per_unit <= max_price)
+        
+    
+    if is_organic is not None:
+        query = query.filter(Product.is_organic == is_organic)
+        
+        
+    products = query.order_by(Product.created_at.desc()).all
+
+    
+    result = []
+    for p in products:
+        farmer = db.query(Farmer).filter(Farmer.id == p.farmer_id).first()
+        result.append({
+            "id":             p.id,
+            "name":           p.name,
+            "category":       p.category,
+            "image":          p.image,
+            "price_per_unit": p.price_per_unit,
+            "unit":           p.unit,
+            "stock_quantity": p.stock_quantity,
+            "average_rating": p.average_rating,
+            "total_ratings":  p.total_ratings,
+            "is_organic":     p.is_organic,
+            "farmer_name":    farmer.user.full_name if farmer and farmer.user else None,
+            "farmer_city":    farmer.user.city      if farmer and farmer.user else None,
+        })
+    return result
