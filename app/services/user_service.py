@@ -33,3 +33,35 @@ def get_dashboard(user , db : Session):
         "delivered_orders" : deliverd_orders,
         "total_feedback" : total_feedback,
     }
+    
+    
+    
+def get_profile(user):
+    
+    return {
+        "id" : user.id,
+        "full_name" : user.full_name,
+        "email" : user.email,
+        "phone" : user.phone,
+        "adress" : user.adress,
+        "city" : user.city,
+        "state" : user.state,
+        "pincode" : user.pincode,
+        "profile_image" : user.profile_image,
+        "created_at" : user.created_at,
+        }
+    
+    
+    
+
+def update_profile(payload, user , db):
+    
+    for field, value in payload.model_dump(exclude_none = True).items():
+        setattr(user, field, value)
+         
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "message" : "Profile updated successfully"
+    }
