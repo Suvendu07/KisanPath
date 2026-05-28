@@ -185,4 +185,41 @@ def place_order(payload, user , db):
         "order_id":    order.id,
         "tracking_id": tracking_id,
     }
+
+
+
+
+
+def list_order(user , db):
+    
+    orders = db.query(Order).filter(Order.buyer_id == user.id).order_by(Order.created_at.desc()).all()
+    
+    
+    return [
+        {
+            "order_id":    o.id,
+            "status":      o.status,
+            "final_amount":o.final_amount,
+            "tracking_id": o.tracking_id,
+            "created_at":  o.created_at,
+            "items_count": len(o.items),
+        }
+        for o in orders
+    ]
  
+ 
+ 
+ 
+def get_order_details(order_id, user, db):
+    
+    details = db.query(Order).filter(Order.id == order_id, Order.buyer_id == user.id).first()
+    
+    
+    if not details:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    
+    
+    return details
+
+
+
