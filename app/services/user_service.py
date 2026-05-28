@@ -91,7 +91,7 @@ def browse_product(category, search, min_price, max_price, is_organic, db : Sess
         query = query.filter(Product.is_organic == is_organic)
         
         
-    products = query.order_by(Product.created_at.desc()).all
+    products = query.order_by(Product.created_at.desc()).all()
 
     
     result = []
