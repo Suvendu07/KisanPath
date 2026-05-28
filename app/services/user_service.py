@@ -4,8 +4,9 @@ from app.models.user_model import User
 from app.models.product_model import Product
 from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
-from app.models.order_model import Order, OrderItem
+from app.models.order_model import Order, OrderItem, OrderStatus
 import uuid
+
 
 
 
@@ -235,7 +236,13 @@ def submit_feedback(payload , user, db: Session) -> dict:
             status_code=404,
             detail="Order not found. You can only review products you have ordered."
         )
- 
+        
+    if order.status != OrderStatus.DELIVERED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Feedback can only be submitted efter successful delivery"
+        )
+        
+        
     existing = db.query(Feedback).filter(
         Feedback.user_id== user.id,
         Feedback.product_id == payload.product_id,
