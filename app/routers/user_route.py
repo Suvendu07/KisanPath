@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
-from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product, place_order,list_order, get_order_details
+from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product, place_order,list_order, get_order_details, submit_feedback, list_own_feedback
 from app.core.permision import require_user
 from app.database import get_db
 
@@ -66,3 +66,19 @@ def list(user : User = Depends(require_user), db : Session = Depends(get_db)):
 def details(order_id : int, user : User = Depends(require_user), db : Session = Depends(get_db)):
     
     return get_order_details(order_id, user, db)
+
+
+
+
+@router.post("/feedback")
+def feedback(payload : FeedbackCreate, user : User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return submit_feedback(payload, user, db)
+
+
+
+
+@router.get("/get-feedback")
+def get(user : User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return list_own_feedback(user , db)

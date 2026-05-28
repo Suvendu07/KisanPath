@@ -116,7 +116,7 @@ def browse_product(category, search, min_price, max_price, is_organic, db : Sess
 
 
 
-def place_order(payload, user , db):
+def place_order(payload, user , db : Session):
     
     total_amount = 0.0
     order_items = []
@@ -190,7 +190,7 @@ def place_order(payload, user , db):
 
 
 
-def list_order(user , db):
+def list_order(user , db : Session):
     
     orders = db.query(Order).filter(Order.buyer_id == user.id).order_by(Order.created_at.desc()).all()
     
@@ -210,7 +210,7 @@ def list_order(user , db):
  
  
  
-def get_order_details(order_id, user, db):
+def get_order_details(order_id, user, db : Session):
     
     details = db.query(Order).filter(Order.id == order_id, Order.buyer_id == user.id).first()
     
@@ -223,3 +223,72 @@ def get_order_details(order_id, user, db):
 
 
 
+
+def submit_feedback(payload , user, db: Session) -> dict:
+    order = db.query(Order).filter(
+        Order.id== payload.order_id,
+        Order.buyer_id == user.id,
+    ).first()
+ 
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found. You can only review products you have ordered."
+        )
+ 
+    existing = db.query(Feedback).filter(
+        Feedback.user_id== user.id,
+        Feedback.product_id == payload.product_id,
+        Feedback.order_id== payload.order_id,
+    ).first()
+ 
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You have already reviewed this product for this order."
+        )
+ 
+    feedback = Feedback(
+        user_id= user.id,
+        product_id = payload.product_id,
+        order_id= payload.order_id,
+        rating= payload.rating,
+        title= payload.title,
+        review= payload.review,
+    )
+    db.add(feedback)
+    db.flush()
+ 
+    product = db.query(Product).filter(Product.id == payload.product_id).first()
+    if product:
+        all_ratings            = db.query(Feedback).filter(
+            Feedback.product_id == payload.product_id
+        ).all()
+        product.total_ratings  = len(all_ratings)
+        product.average_rating = round(
+            sum(f.rating for f in all_ratings) / len(all_ratings), 2
+        )
+ 
+    db.commit()
+    return {"message": "Feedback submitted successfully.", "feedback_id": feedback.id}
+ 
+
+
+
+def list_own_feedback(user, db: Session) -> list:
+    feedbacks = db.query(Feedback).filter(
+        Feedback.user_id == user.id
+    ).order_by(Feedback.created_at.desc()).all()
+ 
+    return [
+        {
+            "id":fb.id,
+            "product_id":fb.product_id,
+            "product_name": fb.product.name if fb.product else None,
+            "rating":fb.rating,
+            "title":fb.title,
+            "review":fb.review,
+            "created_at":fb.created_at,
+        }
+        for fb in feedbacks
+    ]
