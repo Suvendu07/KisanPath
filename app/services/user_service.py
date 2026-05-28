@@ -211,6 +211,7 @@ def list_order(user , db : Session):
  
  
  
+
 def get_order_details(order_id, user, db : Session):
     
     details = db.query(Order).filter(Order.id == order_id, Order.buyer_id == user.id).first()
@@ -220,7 +221,31 @@ def get_order_details(order_id, user, db : Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     
     
-    return details
+    return {
+        "id": details.id,
+        "tracking_id": details.tracking_id,
+        "status": details.status,
+        "created_at": details.created_at,
+        "delivery_address": details.delivery_address,
+        "delivery_city": details.delivery_city,
+        "delivery_pincode": details.delivery_pincode,
+        "delivery_charge": details.delivery_charge,
+        "total_amount": details.total_amount,
+        "final_amount": details.final_amount,
+        "notes": details.notes,
+        "items": [
+            {
+                "id": item.id,
+                "product_id": item.product_id,
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "unit": item.unit,
+                "price_per_unit": item.price_per_unit,
+                "subtotal": item.subtotal
+            }
+            for item in details.items
+        ]
+    }
 
 
 
