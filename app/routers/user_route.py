@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
-from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product
+from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product, place_order
 from app.core.permision import require_user
 from app.database import get_db
 
@@ -41,3 +41,11 @@ def update(payload : UserProfileUpdate, user : User = Depends(require_user), db 
 def browse(category : str = None, search : str = None, min_price : float = None, max_price : float = None, is_organic : bool = None, db : Session = Depends(get_db)):
     
     return browse_product(category, search, min_price, max_price, is_organic, db)
+
+
+
+
+@router.post("/place/order")
+def order(payload : OrderCreate, user : User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return place_order(payload, user, db)

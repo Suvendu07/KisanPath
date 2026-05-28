@@ -4,8 +4,8 @@ from app.models.user_model import User
 from app.models.product_model import Product
 from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
-from app.models.order_model import Order
-
+from app.models.order_model import Order, OrderItem
+import uuid
 
 
 
@@ -112,3 +112,77 @@ def browse_product(category, search, min_price, max_price, is_organic, db : Sess
             "farmer_city":    farmer.user.city      if farmer and farmer.user else None,
         })
     return result
+
+
+
+
+def place_order(payload, user , db):
+    
+    total_amount = 0.0
+    order_items = []
+    
+    
+    for item_in in payload.items:
+        product = db.query(Product).filter(Product.id == item_in.product_id,
+                                           Product.is_available == True,).first()
+        
+        
+        if not product:
+           raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product id {item_in.product_id} not found or unavailable.")
+    
+    
+        if product.stock_quantity < item_in.quantity:
+             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Not enough stock for '{product.name}'."
+                             f"Available: {product.stock_quantity} {product.unit}")
+        
+        
+        
+        subtotal = round(item_in.quantity * product.price_per_unit , 2)
+        total_amount += subtotal
+    
+    
+    
+    
+        order_items.append(OrderItem(
+            product_id= product.id,
+            product_name= product.name,
+            quantity= item_in.quantity,
+            unit= product.unit,
+            price_per_unit = product.price_per_unit,
+            subtotal= subtotal,
+    ))
+    
+    
+        product.stock_quantity -=item_in.quantity
+        
+    
+     
+    final_amount = round(total_amount + DELIVERY_CHARGE, 2)
+    tracking_id  = f"AGR-{uuid.uuid4().hex[:8].upper()}"
+ 
+    order = Order(
+        buyer_id         = user.id,
+        delivery_address = payload.delivery_address,
+        delivery_city    = payload.delivery_city,
+        delivery_pincode = payload.delivery_pincode,
+        total_amount     = round(total_amount, 2),
+        delivery_charge  = DELIVERY_CHARGE,
+        final_amount     = final_amount,
+        tracking_id      = tracking_id,
+        notes            = payload.notes,
+    )
+    db.add(order)
+    db.flush()
+ 
+    for item in order_items:
+        item.order_id = order.id
+        db.add(item)
+ 
+    db.commit()
+    db.refresh(order)
+    return {
+        "message":     "Order placed successfully.",
+        "order_id":    order.id,
+        "tracking_id": tracking_id,
+    }
+ 
