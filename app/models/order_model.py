@@ -67,7 +67,7 @@ class OrderItem(Base):
     id              = Column(Integer, primary_key=True, index=True)
 
     order_id        = Column(Integer, ForeignKey("orders.id",   ondelete="CASCADE"),  nullable=False)
-    product_id      = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
+    product_id      = Column(Integer, ForeignKey("farmer_products.id", ondelete="SET NULL"), nullable=True)
 
     # Snapshot of product details at time of purchase
     product_name    = Column(String(150), nullable=False)

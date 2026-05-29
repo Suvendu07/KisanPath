@@ -14,6 +14,7 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+
 class Feedback(Base):
     __tablename__ = "feedbacks"
 
@@ -28,7 +29,7 @@ class Feedback(Base):
     user_id     = Column(Integer, ForeignKey("users.id",    ondelete="CASCADE"), nullable=False)
 
     # What is being reviewed
-    product_id  = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    product_id  = Column(Integer, ForeignKey("farmer_products.id", ondelete="CASCADE"), nullable=False)
 
     # Which order this feedback belongs to (prevents fake reviews)
     order_id    = Column(Integer, ForeignKey("orders.id",   ondelete="SET NULL"), nullable=True)

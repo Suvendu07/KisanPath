@@ -18,7 +18,7 @@ class VendorOrderStatus(str, enum.Enum):
     
     
     
-class BuyerType(sts, enum.Enum):
+class BuyerType(str, enum.Enum):
     
     FARMER = "farmer"
     USER = "user"
