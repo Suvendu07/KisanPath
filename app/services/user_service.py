@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.user_model import User
-from app.models.product_model import Product
+from app.models.farmer_product_model import Product
 from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
 from app.models.order_model import Order, OrderItem, OrderStatus

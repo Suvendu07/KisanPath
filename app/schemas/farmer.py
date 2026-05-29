@@ -2,7 +2,7 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 
-from app.models.product_model import ProductCategory, ProductUnit
+from app.models.farmer_product_model import ProductCategory, ProductUnit
 from fastapi import Form
 
 

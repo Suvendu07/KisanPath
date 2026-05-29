@@ -17,7 +17,7 @@ from sqlalchemy.orm import (
 from app.config import settings
 from app.models.user_model import User
 from app.models.farmer_model import Farmer
-from app.models.product_model import Product
+from app.models.farmer_product_model import Product
 from app.models.order_model import OrderItem
 
 from app.schemas.farmer import (

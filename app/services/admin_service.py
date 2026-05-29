@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.user_model import User, UserRole
 from app.models.farmer_model import Farmer
 from app.models.vendor_model import Vendor
-from app.models.product_model import Product
+from app.models.farmer_product_model import Product
 from app.models.order_model import Order
 from app.schemas.admin import (
     DashboardStats,

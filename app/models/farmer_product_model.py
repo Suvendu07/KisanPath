@@ -36,7 +36,7 @@ class ProductUnit(str, enum.Enum):
 
 
 class Product(Base):
-    __tablename__ = "products"
+    __tablename__ = "farmer_products"
 
     id              = Column(Integer, primary_key=True, index=True)
 
