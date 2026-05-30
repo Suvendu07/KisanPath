@@ -2,10 +2,12 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
 from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices, list_own_prices,create_price, delete_Price, update_price
 from app.models.user_model import User
+from app.models.vendor_model import Vendor
 from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
 from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate,MandiPriceCreate, MandiPriceUpdate
-
+from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate, VendorProductResponse, VendorOrderResponse, VendorPurchaseRequest
+from app.services.vendor_purchase_service import list_vendor_product
 
 
 router = APIRouter(prefix="/vendor",
@@ -80,3 +82,11 @@ def price_update(payload : MandiPriceUpdate, price_id : int, current_user : User
 def price_delete(price_id : int, user : User = Depends(require_vendor), db : Session = Depends(get_db)):
     
     return delete_Price(price_id, user, db)
+
+
+
+
+@router.get("/listing/products")
+def list_products(vendor : Vendor = Depends(get_vendor), db : Session = Depends(get_db)):
+    
+    return list_vendor_product(vendor, db)

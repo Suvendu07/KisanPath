@@ -28,13 +28,12 @@ def build_listing_response(listing : VendorProduct, db : Session):
 def list_vendor_product(vendor , db : Session):
     data = db.query(VendorProduct).filter(VendorProduct.vendor_id == vendor.id).order_by(VendorProduct.created_at.desc()).all()
     
-    return [build_listing_response(1, db) for i in data]
+    return [build_listing_response(i, db) for i in data]
 
 
 
 
 def create_vendor_product(payload, vendor , db : Session):
-    
     
     if not vendor.is_approved:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your vendor account must be approved by admin before listing products.")

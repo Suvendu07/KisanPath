@@ -10,6 +10,7 @@ from app.models.mandi_model import MandiPrice
 
 
 
+
 def get_vendor_by_user(user: User, db : Session):
     
     vendor = db.query(Vendor).filter(Vendor.user_id == user.id).first()
@@ -18,6 +19,7 @@ def get_vendor_by_user(user: User, db : Session):
         raise HTTPException(status_code=404, detail="Vendor profile not found")
     
     return vendor
+
 
 
 
