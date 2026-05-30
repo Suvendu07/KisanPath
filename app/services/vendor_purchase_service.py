@@ -52,14 +52,14 @@ def create_vendor_product(payload, vendor , db : Session):
 
 def update_vendor_Product(payload ,product_id, vendor, db : Session):
     
-    data = db.query(VendorProduct).filter(VendorProduct.id == product_id, VendorProduct.vendor_id == vendor.id)
+    data = db.query(VendorProduct).filter(VendorProduct.id == product_id, VendorProduct.vendor_id == vendor.id).first()
     
     
     if not data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data not found")
     
     
-    for field, value in payload.model_dumo(exclude_none = True).items():
+    for field, value in payload.model_dump(exclude_none = True).items():
         setattr(data, field, value)
         
         
