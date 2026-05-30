@@ -14,8 +14,8 @@ from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate,
 
 
 
-def build_listing_response(listing : VendorProduct, db : Session):
-    data = VendorOrderResponse.model_validate(listing).model_dump()
+def build_listing_response(listing : VendorProduct, db : Session) -> dict:
+    data = VendorProductResponse.model_validate(listing).model_dump()
     
     if listing.vendor and listing.vendor.user:
         data["vendor_name"]     = listing.vendor.user.full_name

@@ -7,7 +7,7 @@ from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
 from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate,MandiPriceCreate, MandiPriceUpdate
 from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate, VendorProductResponse, VendorOrderResponse, VendorPurchaseRequest
-from app.services.vendor_purchase_service import list_vendor_product
+from app.services.vendor_purchase_service import list_vendor_product, create_vendor_product
 
 
 router = APIRouter(prefix="/vendor",
@@ -90,3 +90,11 @@ def price_delete(price_id : int, user : User = Depends(require_vendor), db : Ses
 def list_products(vendor : Vendor = Depends(get_vendor), db : Session = Depends(get_db)):
     
     return list_vendor_product(vendor, db)
+
+
+
+
+@router.post("/create/products")
+def create_products(payload : VendorProductCreate, current_user : Vendor = Depends(get_vendor), db : Session = Depends(get_db)):
+    
+    return create_vendor_product(payload, current_user, db)

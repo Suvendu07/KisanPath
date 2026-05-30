@@ -69,9 +69,9 @@ class VendorProductUpdate(BaseModel):
 
 class VendorProductResponse(BaseModel):
     id : int
-    vendor__id : int
+    vendor_id : int
     crop_name : str
-    crop_veriety : Optional[str]
+    crop_variety : Optional[str]
     description : Optional[str]
     price_per_unit:  float
     unit:  BulkUnit
