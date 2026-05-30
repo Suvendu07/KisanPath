@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, Enum, DateTime, ForeignKey, Text
+from sqlalchemy import Column, String, Integer, Float, Enum, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -34,6 +34,9 @@ class VendorProduct(Base):
     min_order_quantity = Column(Float, nullable=False, default=1.0)
 
     available_at = Column(String(200), default=None)
+    
+    is_available = Column(Boolean, default=True)
+
 
     created_at = Column(
         DateTime(timezone=True),
