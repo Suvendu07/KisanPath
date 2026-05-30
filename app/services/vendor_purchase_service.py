@@ -92,18 +92,23 @@ def delete_vendor_product(product_id, vendor, db : Session):
 
 # Public -- Browse Vendor Product
 
-def browse_vendor_product(crop_name , state, db):
-    
-    data = db.query(VendorProduct).filter(VendorProduct.is_available == True, VendorProduct.stock_quantity > 0)
-    
+def browse_vendor_product(crop_name, db):
+
+    query = db.query(VendorProduct).filter(
+        VendorProduct.is_available == True,
+        VendorProduct.stock_quantity > 0
+    )
+
     if crop_name:
-        query = query.filter(VendorProduct.crop_name.ilike(f"{crop_name}"))
-        
-    data = query.order_by(VendorProduct.created_at.desc()).all()
-    
-    return [build_listing_response(1, db) for i in data]
+        query = query.filter(
+            VendorProduct.crop_name.ilike(f"%{crop_name}%")
+        )
 
+    data = query.order_by(
+        VendorProduct.created_at.desc()
+    ).all()
 
+    return [build_listing_response(i, db) for i in data]
 
 
 def get_vendor_listing_details(listing_id , db : Session):
