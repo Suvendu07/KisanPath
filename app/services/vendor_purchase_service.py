@@ -1,14 +1,13 @@
 import uuid
 
-from fastapi import Depends, HTTPException, status
+from fastapi import  HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User
-from app.models.vendor_model import Vendor
 from app.models.vendor_product_model import VendorProduct
-from app.models.vendor_order import VendorOrder, BuyerType, VendorOrderStatus
+from app.models.vendor_order import VendorOrder, BuyerType
 from app.services.vendor_service import get_vendor
-from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate, VendorProductResponse, VendorOrderResponse, VendorPurchaseRequest
+from app.schemas.vendor_product import  VendorProductResponse, VendorOrderResponse
 
 
 
@@ -237,7 +236,7 @@ def get_my_vendor_orders(buyer: User, buyer_type: BuyerType, db: Session) -> lis
  
  
  
-def get_vendor_order_detail(buyer: User, order_id: int, db: Session) -> VendorOrderResponse:
+def get_vendor_order_detail(order_id: int, buyer: User,  db: Session) -> VendorOrderResponse:
     """Returns full detail of a single vendor order."""
     order = db.query(VendorOrder).filter(
         VendorOrder.id       == order_id,

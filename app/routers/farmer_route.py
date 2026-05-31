@@ -28,7 +28,7 @@ from app.services.farmer_service import (
 
 from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail
 from app.models.vendor_order import BuyerType
-from app.schemas.vendor_product import VendorPurchaseRequest, VendorOrderResponse
+from app.schemas.vendor_product import VendorPurchaseRequest
 from app.core.permision import require_farmer
 
 
@@ -160,3 +160,11 @@ def vendor_purchase(payload : VendorPurchaseRequest,current_user : User = Depend
 def farmer_vendor_order_history(current_user : User = Depends(require_farmer), buyer_type = BuyerType.FARMER, db : Session = Depends(get_db)):
     
     return get_my_vendor_orders(current_user, buyer_type, db)
+
+
+
+
+@router.get("/vendor-orders/{order_id}")
+def farme_vendor_order_details( order_id : int, buyer : User = Depends(require_farmer),db : Session = Depends(get_db)):
+    
+    return get_vendor_order_detail(order_id, buyer, db)
