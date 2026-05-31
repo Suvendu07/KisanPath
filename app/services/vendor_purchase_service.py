@@ -126,11 +126,8 @@ def get_vendor_listing_details(listing_id , db : Session):
 
 
 def place_vendor_purchase(
-    buyer:      User,
-    buyer_type: BuyerType,
-    payload:    VendorPurchaseRequest,
-    db:         Session,
-) -> dict:
+        payload, buyer , buyer_type, db
+):
  
  
     # Step 1 — Find the listing

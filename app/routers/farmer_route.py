@@ -12,6 +12,7 @@ from app.schemas.farmer import (
     ProductResponse
 )
 
+
 from app.services.farmer_service import (
     get_farmer,
     get_dashboard,
@@ -25,7 +26,13 @@ from app.services.farmer_service import (
     get_farmer_orders
 )
 
+from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail
+from app.models.vendor_order import BuyerType
+from app.schemas.vendor_product import VendorPurchaseRequest, VendorOrderResponse
 from app.core.permision import require_farmer
+
+
+
 
 router = APIRouter(
     prefix="/farmer",
@@ -120,3 +127,36 @@ def get_orders_route(
     db: Session = Depends(get_db)
 ):
     return get_farmer_orders(farmer, db)
+
+
+
+
+@router.get("/vendor-listing")
+def browse_product(current_user : User = Depends(require_farmer), crop_name : str = None, db : Session = Depends(get_db)):
+    
+    return browse_vendor_product(crop_name , db)
+
+
+
+
+@router.get("vendor-listing/{listing_id}")
+def get_vendor_listing(listing_id : int, current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
+    
+    return get_vendor_listing_details(listing_id, db)
+
+
+
+
+@router.post("/vendor-purchase")
+def vendor_purchase(payload : VendorPurchaseRequest,current_user : User = Depends(require_farmer), buyer_type = BuyerType.FARMER, db : Session = Depends(get_db)):
+    
+    return place_vendor_purchase(payload, current_user, buyer_type, db)
+
+
+
+
+
+@router.get("/vendor-orders")
+def farmer_vendor_order_history(current_user : User = Depends(require_farmer), buyer_type = BuyerType.FARMER, db : Session = Depends(get_db)):
+    
+    return get_my_vendor_orders(current_user, buyer_type, db)
