@@ -209,3 +209,16 @@ class UserResponse(BaseModel):
 
     # Tells Pydantic to read from SQLAlchemy model attributes directly
     model_config = {"from_attributes": True}
+    
+    
+    
+    
+class ForgetPasswordRequest(BaseModel):
+    email : EmailStr
+    
+    
+    
+
+class ResetPasswordRequest(BaseModel):
+    token : str
+    new_password : str
