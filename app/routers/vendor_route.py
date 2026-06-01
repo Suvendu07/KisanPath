@@ -44,7 +44,6 @@ def profile_update(payload : VendorProfileUpdate, current_user : User = Depends(
 def all_mandi_prices(
     crop_name:    str  = None,
     state:        str  = None,
-    current_user: User    = Depends(get_current_user),
     db:           Session = Depends(get_db),
 ):
     return get_all_prices(crop_name, state, db)
