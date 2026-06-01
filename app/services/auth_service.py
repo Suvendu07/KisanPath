@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from app.models.user_model import User, UserRole
 from app.models.farmer_model import Farmer
 from app.models.vendor_model import Vendor
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password, create_reset_token, verify_reset_token
 from app.schemas.auth import  LoginRequest, TokenResponse
+from app.utils.email import send_reset_email
 from app.config import settings
 
 
@@ -224,3 +225,49 @@ def login_user(data: LoginRequest, db: Session) -> TokenResponse:
         user_id   = user.id,
         full_name = user.full_name,
     )
+    
+    
+    
+
+
+def forget_password(payload, db):
+    user = (db.query(User).filter(User.email == payload.email).first())
+    
+    
+    if user:
+        token = create_reset_token(user.email)
+        
+        send_reset_email(user.email, token)
+        
+        
+    return {
+        "message" : "If the email exists, a password reset kink has been sent."
+    }
+    
+    
+    
+    
+def reset_password(payload, db):
+    
+    email = verify_reset_token(payload.token)
+    
+    if not email:
+        
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+    
+    
+    user = (db.query(User).filter(User.email == email).first())
+    
+    
+    if not user:
+
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hash_password = hash_password(payload.new_password)
+
+    db.commit()
+
+    return {
+        "message":
+        "Password reset successful"
+    }

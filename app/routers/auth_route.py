@@ -10,17 +10,8 @@ from app.core.dependencies import (
 )
 from app.core.security import decode_token, create_access_token
 from app.models.user_model import User
-from app.schemas.auth import (
-    UserRegister,
-    FarmerRegister,
-    VendorRegister,
-    LoginRequest,
-    TokenResponse,
-    AccessTokenResponse,
-    UserResponse
-    
-)
-from app.services.auth_service import register_user, register_farmer, register_vendor, login_user
+from app.schemas.auth import UserRegister,FarmerRegister,VendorRegister,LoginRequest,TokenResponse,AccessTokenResponse,UserResponse, ForgetPasswordRequest, ResetPasswordRequest
+from app.services.auth_service import register_user, register_farmer, register_vendor, login_user, forget_password, reset_password
 
 
 
@@ -196,3 +187,27 @@ def logout(response: Response):
 
     clear_auth_cookies(response)
     return {"message": "Logged out successfully."}
+
+
+
+
+
+@router.post("/forgot-password")
+def forgot(payload: ForgetPasswordRequest,db: Session = Depends(get_db)):
+
+    return forget_password(
+        payload,
+        db
+    )
+    
+    
+    
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest,db: Session = Depends(get_db)):
+
+    return reset_password(
+        payload,
+        db
+    )
