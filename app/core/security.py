@@ -33,6 +33,7 @@ def verify_password(plain_password: str, hash_password: str) -> bool:
 
 
 
+
 def create_access_token(data : dict, expire_delta : Optional[timedelta] = None) -> str:
     
     to_encode = data.copy()
@@ -46,6 +47,7 @@ def create_access_token(data : dict, expire_delta : Optional[timedelta] = None) 
     })
     
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
 
 
 
@@ -63,12 +65,49 @@ def create_refresh_token(data : dict) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
+
+
 def decode_token(token : str) -> Optional[dict]:
     
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
         
         return payload
+    
+    except JWTError:
+        return None
+    
+    
+    
+
+
+def create_reset_token(email : str):
+    
+    payload = {
+        "sub" : email,
+        "type" : "password_reset",
+        "exp" : datetime.utcnow() + timedelta(minutes=5)
+    }
+    
+    
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+
+
+def verify_reset_token(token : str):
+    
+    try:
+        
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        
+        if payload.get("type") != "password_reset":
+            return None
+        
+        
+        return payload.get("sub")
+    
     
     except JWTError:
         return None
