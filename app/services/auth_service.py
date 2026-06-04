@@ -92,12 +92,16 @@ def register_user(data , image , db : Session):
     db.commit()
     db.refresh(new_user)
     
+    try:
     
-    send_welcome_email(
+      send_welcome_email(
         recipient_email=new_user.email,
         full_name=new_user.full_name,
         role=new_user.role.value
     )
+      
+    except Exception as e:
+        print(e)
     
     
     return {
@@ -150,11 +154,14 @@ def register_farmer(data, image, db):
 
     db.commit()
     
-    send_welcome_email(recipient_email=new_user.email,
+    try:
+       send_welcome_email(recipient_email=new_user.email,
                        full_name=new_user.full_name,
                        role = new_user.role.value
                        )
     
+    except Exception as e:
+        print(e)
     
     return {
         "message": "Farmer registered successfully"
@@ -206,11 +213,16 @@ def register_vendor(data, image, db: Session):
 
     db.commit()
     
-    send_welcome_email(recipient_email=new_user.email,
+    try:
+        
+        send_welcome_email(recipient_email=new_user.email,
                        full_name=new_user.full_name,
                        role = new_user.role.value
                        )
-
+    
+    except Exception as e:
+        print(e)
+        
     return {
         "message": "Vendor Registered Successfully"
     }
