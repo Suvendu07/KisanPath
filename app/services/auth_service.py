@@ -12,7 +12,8 @@ from app.core.security import hash_password, verify_password, create_reset_token
 from app.schemas.auth import  LoginRequest, TokenResponse
 from app.utils.email import send_reset_email
 from app.config import settings
-
+from app.services.email_service import send_welcome_email
+1
 
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -91,6 +92,14 @@ def register_user(data , image , db : Session):
     db.commit()
     db.refresh(new_user)
     
+    
+    send_welcome_email(
+        recipient_email=new_user.email,
+        full_name=new_user.full_name,
+        role=new_user.role.value
+    )
+    
+    
     return {
         "message" : "User Register Successfully"
     }
@@ -140,7 +149,13 @@ def register_farmer(data, image, db):
     db.add(new_farmer)
 
     db.commit()
-
+    
+    send_welcome_email(recipient_email=new_user.email,
+                       full_name=new_user.full_name,
+                       role = new_user.role.value
+                       )
+    
+    
     return {
         "message": "Farmer registered successfully"
     }
@@ -190,6 +205,11 @@ def register_vendor(data, image, db: Session):
     db.add(new_vendor)
 
     db.commit()
+    
+    send_welcome_email(recipient_email=new_user.email,
+                       full_name=new_user.full_name,
+                       role = new_user.role.value
+                       )
 
     return {
         "message": "Vendor Registered Successfully"
