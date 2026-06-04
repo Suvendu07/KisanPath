@@ -16,11 +16,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+
+
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
@@ -28,6 +32,7 @@ EPOCHS = 20
 DATASET_PATH = "/content/drive/MyDrive/Plant_leave_diseases_dataset_without_augmentation"
 MODEL_OUT = "model.h5"
 LABELS_OUT = "class_labels.json"
+
 
 train_datagen = ImageDataGenerator(
     rescale = 1.0 / 255,
@@ -178,6 +183,6 @@ def plot_history(h1, h2):
 
 plot_history(history1, history2)
 
-print("\n🎉 Training complete!")
+print("\n Training complete!")
 print(f"   Download  '{MODEL_OUT}'  and  '{LABELS_OUT}'")
 print("   Place both in  backend/ml_models/crop_disease/")
