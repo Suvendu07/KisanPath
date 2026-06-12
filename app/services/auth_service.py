@@ -13,7 +13,7 @@ from app.schemas.auth import  LoginRequest, TokenResponse
 from app.utils.email import send_reset_email
 from app.config import settings
 from app.services.email_service import send_welcome_email
-1
+
 
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
