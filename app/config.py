@@ -33,8 +33,8 @@ class Settings(BaseSettings):
     COHERE_API_KEY: str
     GROQ_API_KEY: str
     
-    Test_API_Key : str
-    Test_Key_Secret : str
+    RAZORPAY_KEY_ID : str
+    RAZORPAY_KEY_SECRET : str
 
     class Config:
         env_file = ".env"
