@@ -13,7 +13,16 @@ class PaymentInitiateRequest(BaseModel):
     order_id : int
     
     
+ 
+class PaymentInitiateResponse(BaseModel):
+    razorpay_order_id: str
+    amount: float  
+    currency: str
+    payment_id: int  
+    key_id: str    
     
+
+
 class PaymentVerifyRequest(BaseModel):
     razorpay_order_id : str
     razorpay_payment_id : str
