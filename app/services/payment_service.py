@@ -30,7 +30,7 @@ def get_razorpay_client() -> razorpay.Client:
         
         
 
-def initiate_payment(payer : User, payload : PaymentInitiateRequest, db : Session,) -> PaymentInitiateResponse:
+def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
     
     amount = None
     product_order = None
