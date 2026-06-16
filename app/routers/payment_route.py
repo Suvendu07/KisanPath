@@ -13,7 +13,7 @@ from app.schemas.payment import PaymentInitiateRequest, PaymentInitiateResponse,
 from app.services import payment_service
 
 
-router = APIRouter(prefix="Payment", tags=["Payment"])
+router = APIRouter(prefix="/Payment", tags=["Payment"])
 
 
 @router.post("/initiate", response_model=PaymentInitiateResponse)
