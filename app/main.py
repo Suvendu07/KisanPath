@@ -7,6 +7,7 @@ from app.routers.admin_route import router as admin_router
 from app.routers.farmer_route import router as farmer_router
 from app.routers.vendor_route import router as vendor_router
 from app.routers.user_route import router as user_router
+from app.routers.payment_route import router as payment_router
 from fastapi.staticfiles import StaticFiles
 
 
@@ -44,3 +45,4 @@ app.include_router(admin_router)
 app.include_router(farmer_router)
 app.include_router(vendor_router)
 app.include_router(user_router)
+app.include_router(payment_router)
