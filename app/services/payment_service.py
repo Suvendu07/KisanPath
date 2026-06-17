@@ -208,7 +208,7 @@ def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
  
  
 
-def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
+def refund_payment(payload , db: Session) -> RefundResponse:
     """
     Admin issues a refund via Razorpay.
     - Full refund if refund_amount is None
