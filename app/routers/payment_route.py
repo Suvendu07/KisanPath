@@ -34,3 +34,11 @@ def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends
 def cancel_order(order_type : OrderType, order_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     
     return payment_service.cancel_order(order_type, order_id, current_user, db)
+
+
+
+
+@router.get("/history")
+def payment_history(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    
+    return payment_service.get_payment_history(current_user, db)

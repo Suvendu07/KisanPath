@@ -346,7 +346,7 @@ def cancel_order(order_type, order_id, user, db: Session,) -> dict:
  
 
 
-def get_payment_history(user: User, db: Session) -> list:
+def get_payment_history(user , db: Session) -> list:
     """Returns all payments made by a user."""
     payments = db.query(payment).filter(
         payment.payer_id == user.id
