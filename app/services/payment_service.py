@@ -280,12 +280,7 @@ def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
  
 
 
-def cancel_order(
-    user: User,
-    order_type: OrderType,
-    order_id: int,
-    db: Session,
-) -> dict:
+def cancel_order(order_type, order_id, user, db: Session,) -> dict:
     """
     User cancels an order BEFORE paying.
     Simply marks the order as CANCELLED and restores stock.

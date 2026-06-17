@@ -27,3 +27,10 @@ def initiate_payment(payload : PaymentInitiateRequest, current_user : User = Dep
 def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     
     return payment_service.verify_payment(payload, current_user, db)
+
+
+
+@router.post("/cancel")
+def cancel_order(order_type : OrderType, order_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    
+    return payment_service.cancel_order(order_type, order_id, current_user, db)
