@@ -20,3 +20,10 @@ router = APIRouter(prefix="/Payment", tags=["Payment"])
 def initiate_payment(payload : PaymentInitiateRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
     
     return payment_service.initiate_payment(payload, current_user, db)
+
+
+
+@router.post("/verify", response_model= PaymentVerifyResponse)
+def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    
+    return payment_service.verify_payment(payload, current_user, db)

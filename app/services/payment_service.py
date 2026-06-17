@@ -134,11 +134,7 @@ def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
  
  
 
-def verify_payment(
-    payer:   User,
-    payload: PaymentVerifyRequest,
-    db:      Session,
-) -> PaymentVerifyResponse:
+def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
     """
     Step 2 of payment flow.
     Called by frontend after Razorpay popup closes with success.
