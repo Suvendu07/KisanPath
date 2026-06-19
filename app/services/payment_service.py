@@ -13,7 +13,7 @@ from app.config import settings
 from app.models.user_model import User
 from app.models.order_model import Order, OrderStatus
 from app.models.vendor_order import VendorOrder, VendorOrderStatus
-from app.models.payment_model import payment, PaymentStatus, OrderType
+from app.models.payment_model import Payment, PaymentStatus, OrderType
 from app.schemas.payment import PaymentInitiateRequest, PaymentInitiateResponse,PaymentVerifyResponse, PaymentVerifyRequest,RefundRequest, RefundResponse
 
 
@@ -75,14 +75,14 @@ def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
         
     existing_payment = None
     if payload.order_type == OrderType.PRODUCT:
-        existing_payment = db.query(payment).filter(
-            payment.product_order_id == payload.order_id,
-            payment.status.in_([PaymentStatus.CREATED, PaymentStatus.PAID]),
+        existing_payment = db.query(Payment).filter(
+            Payment.product_order_id == payload.order_id,
+            Payment.status.in_([PaymentStatus.CREATED, PaymentStatus.PAID]),
         ).first()
     else:
-        existing_payment = db.query(payment).filter(
-            payment.vendor_order_id == payload.order_id,
-            payment.status.in_([PaymentStatus.CREATED, PaymentStatus.PAID]),
+        existing_payment = db.query(Payment).filter(
+            Payment.vendor_order_id == payload.order_id,
+            Payment.status.in_([PaymentStatus.CREATED, PaymentStatus.PAID]),
         ).first()
  
     if existing_payment and existing_payment.status == PaymentStatus.PAID:
@@ -110,7 +110,7 @@ def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
     })
  
 
-    payment = payment(
+    new_payment = Payment(
         payer_id          = payer.id,
         order_type        = payload.order_type,
         product_order_id  = product_order.id if product_order else None,
@@ -120,15 +120,15 @@ def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
         currency          = "INR",
         status            = PaymentStatus.CREATED,
     )
-    db.add(payment)
+    db.add(new_payment)
     db.commit()
-    db.refresh(payment)
+    db.refresh(new_payment)
  
     return PaymentInitiateResponse(
         razorpay_order_id = rzp_order["id"],
         amount            = amount,
         currency          = "INR",
-        payment_id        = payment.id,
+        payment_id        = new_payment.id,
         key_id            = settings.RAZORPAY_KEY_ID,
     )
  
