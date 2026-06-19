@@ -23,7 +23,7 @@ class OrderType(str, enum.Enum):
     VENDOR = "vendor"
     
     
-class payment(Base):
+class Payment(Base):
     
     
     __tablename__ = "payments"
