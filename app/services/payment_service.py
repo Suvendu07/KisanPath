@@ -24,7 +24,7 @@ def get_razorpay_client() -> razorpay.Client:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail="Razorpay keys not configured. Add them..")
         
-        return razorpay.Client(
+    return razorpay.Client(
             auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
         )
         
@@ -144,9 +144,9 @@ def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
     """
  
     # Find the payment record
-    payment = db.query(payment).filter(
-        payment.razorpay_order_id == payload.razorpay_order_id,
-        payment.payer_id == payer.id,
+    payment = db.query(Payment).filter(
+        Payment.razorpay_order_id == payload.razorpay_order_id,
+        Payment.payer_id == payer.id,
     ).first()
  
     if not payment:
@@ -348,9 +348,9 @@ def cancel_order(order_type, order_id, user, db: Session,) -> dict:
 
 def get_payment_history(user , db: Session) -> list:
     """Returns all payments made by a user."""
-    payments = db.query(payment).filter(
-        payment.payer_id == user.id
-    ).order_by(payment.created_at.desc()).all()
+    payments = db.query(Payment).filter(
+        Payment.payer_id == user.id
+    ).order_by(Payment.created_at.desc()).all()
  
     return [
         {
