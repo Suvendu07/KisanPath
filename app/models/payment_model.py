@@ -60,8 +60,11 @@ class Payment(Base):
     refund_reason = Column(Text, nullable=True)
     
     
-    created_at = Column(DateTime(timezone=True), default=lambda : datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc),)
-    paid_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    updated_at = Column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
+
+    paid_at = Column(DateTime(timezone=True),nullable=True)
     
     
     payer = relationship("User", foreign_keys=[payer_id])
