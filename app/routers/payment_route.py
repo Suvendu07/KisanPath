@@ -57,17 +57,17 @@ def refund_payment(payload : RefundRequest, current_user : User = Depends(requir
 @router.get("/admin/all")
 def all_payment(pay_status : str = None, order_type : str = None, current_user : User = Depends(require_admin), db : Session = Depends(get_db),):
     
-    from app.models.payment_model import payment, PaymentStatus
+    from app.models.payment_model import Payment, PaymentStatus
     
-    query = db.query(payment)
+    query = db.query(Payment)
     if pay_status:
-        query = query.filter(payment.status == pay_status)
+        query = query.filter(Payment.status == pay_status)
         
     if order_type:
-        query = query.filter(payment.order_type == order_type)
+        query = query.filter(Payment.order_type == order_type)
         
         
-    payments = query.order_by(payment.created_at.desc()).all()
+    payments = query.order_by(Payment.created_at.desc()).all()
     
     
     return [
