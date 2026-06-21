@@ -214,7 +214,7 @@ def refund_payment(payload , db: Session) -> RefundResponse:
     - Full refund if refund_amount is None
     - Partial refund if refund_amount is specified
     """
-    payment = db.query(payment).filter(payment.id == payload.payment_id).first()
+    payment = db.query(Payment).filter(Payment.id == payload.payment_id).first()
  
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found.")
