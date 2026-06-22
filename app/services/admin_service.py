@@ -128,6 +128,8 @@ def list_farmers(is_approved: bool, db: Session) -> list:
 
 
 
+
+
 def approve_farmer(farmer_id: int, payload: ApprovalAction, db: Session) -> dict:
     farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
     if not farmer:
@@ -138,8 +140,6 @@ def approve_farmer(farmer_id: int, payload: ApprovalAction, db: Session) -> dict
 
     action = "approved" if payload.approve else "rejected"
     return {"message": f"Farmer account {action} successfully."}
-
-
 
 
 
@@ -203,6 +203,31 @@ def list_all_orders(order_status: str, db: Session) -> list:
     ]
 
 
+
+
+def list_all_vendor_orders(order_status: str, db: Session) -> list:
+    query = db.query(Vendor)
+    if order_status:
+        query = query.filter(Vendor.status == order_status)
+
+    return [
+        {
+            "order_id":     o.id,
+            "buyer_id":     o.buyer_id,
+            "buyer_type":   o.buyer_type,
+            "vendor_id":    o.vendor_id,
+            "crop_name":    o.vendor_product.crop_name if o.vendor_product else None,
+            "quantity":     o.quantity,
+            "unit":         o.unit,
+            "status":       o.status,
+            "total_amount": o.total_amount,
+            "created_at":   o.created_at,
+        }
+        for o in query.order_by(Vendor.created_at.desc()).all()
+    ]
+    
+    
+    
 
 def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) -> dict:
     order = db.query(Order).filter(Order.id == order_id).first()
