@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.user_model import User, UserRole
 from app.models.farmer_model import Farmer
 from app.models.vendor_model import Vendor
+from app.models.vendor_order import VendorOrder
 from app.models.farmer_product_model import Product
 from app.models.order_model import Order
 from app.schemas.admin import (
@@ -206,24 +207,24 @@ def list_all_orders(order_status: str, db: Session) -> list:
 
 
 def list_all_vendor_orders(order_status: str, db: Session) -> list:
-    query = db.query(Vendor)
+    query = db.query(VendorOrder)
     if order_status:
-        query = query.filter(Vendor.status == order_status)
+        query = query.filter(VendorOrder.status == order_status)
 
     return [
         {
             "order_id":     o.id,
             "buyer_id":     o.buyer_id,
             "buyer_type":   o.buyer_type,
-            "vendor_id":    o.vendor_id,
-            "crop_name":    o.vendor_product.crop_name if o.vendor_product else None,
+            "vendor_id":    o.vendor_product_model.vendor_id if o.vendor_product_model else None,
+            "crop_name":    o.crop_name,
             "quantity":     o.quantity,
             "unit":         o.unit,
             "status":       o.status,
             "total_amount": o.total_amount,
             "created_at":   o.created_at,
         }
-        for o in query.order_by(Vendor.created_at.desc()).all()
+        for o in query.order_by(VendorOrder.created_at.desc()).all()
     ]
     
     

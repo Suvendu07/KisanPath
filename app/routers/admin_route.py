@@ -134,7 +134,7 @@ def list_all_orders(
 
 
 @router.get("/vendor-orders")
-def list_all_vendor_orders(order_status : str = None, current_user : User = Depends(require_admin), db : Session = Depends(get_db)):
+def list_all_vendor_order(order_status : str = None, current_user : User = Depends(require_admin), db : Session = Depends(get_db)):
     
     return admin_service.list_all_vendor_orders(order_status, db)
 
