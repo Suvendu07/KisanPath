@@ -132,6 +132,15 @@ def list_all_orders(
 
 
 
+
+@router.get("/vendor-orders")
+def list_all_vendor_orders(order_status : str = None, current_user : User = Depends(require_admin), db : Session = Depends(get_db)):
+    
+    return admin_service.list_all_vendor_orders(order_status, db)
+
+
+
+
 @router.put("/orders/{order_id}/status", summary="Update any order's status")
 def update_order_status(
     order_id:     int,
