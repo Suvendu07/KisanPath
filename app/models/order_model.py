@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Text,
+    Date,
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -19,7 +20,8 @@ class OrderStatus(str, enum.Enum):
     PENDING     = "pending"       # just placed, payment not confirmed
     CONFIRMED   = "confirmed"     # payment done
     PROCESSING  = "processing"    # farmer is preparing
-    SHIPPED     = "shipped"       # out for delivery
+    SHIPPED     = "shipped"  
+    OUT_FOR_DELIVERY  = "out_for_delivery"    # courier delivering today
     DELIVERED   = "delivered"     # received by buyer
     CANCELLED   = "cancelled"     # cancelled by user or admin
 
@@ -47,7 +49,10 @@ class Order(Base):
     status              = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
     tracking_id         = Column(String(100), nullable=True, unique=True)
     notes               = Column(Text, nullable=True)      # special instructions
-
+    
+    
+    estimate_delivery_date = Column(Date, nullable=True)
+    
     # Timestamps
     created_at          = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at          = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
