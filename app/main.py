@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth_route import router as auth_router
-from app.models import farmer_product_model, user_model, farmer_model, vendor_model, order_model, feedback_model, mandi_model, vendor_order, vendor_product_model, payment_model
+from app.models import farmer_product_model, user_model, farmer_model, vendor_model, order_model, feedback_model, mandi_model, vendor_order, vendor_product_model, payment_model, order_tracking
 from app.routers.admin_route import router as admin_router
 from app.routers.farmer_route import router as farmer_router
 from app.routers.vendor_route import router as vendor_router

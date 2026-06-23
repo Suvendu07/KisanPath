@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.database import Base
-from app.models import farmer_product_model, user_model, farmer_model, feedback_model, mandi_model, order_model, vendor_model, vendor_product_model, vendor_order, payment_model
+from app.models import farmer_product_model, user_model, farmer_model, feedback_model, mandi_model, order_model, vendor_model, vendor_product_model, vendor_order, payment_model, order_tracking
 from app.config import settings
 
 # this is the Alembic Config object, which provides
