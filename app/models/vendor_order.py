@@ -7,6 +7,7 @@ from sqlalchemy import (
     Integer,
     Float,
     Enum,
+    Date,
     DateTime,
     ForeignKey,
     Text
@@ -21,6 +22,7 @@ class VendorOrderStatus(str, enum.Enum):
     CONFIRMED = "confirmed"
     PROCESSING = "processing"
     SHIPPED = "shipped"
+    OUT_FOR_DELIVERY  = "out_for_delivery"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
@@ -49,58 +51,38 @@ class VendorOrder(Base):
     quantity = Column(Float, nullable=False)
     total_amount = Column(Float, nullable=False)
 
-    buyer_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True
-    )
+    buyer_id = Column(Integer,ForeignKey("users.id", ondelete="SET NULL"),nullable=True)
 
-    buyer_type = Column(
-        Enum(BuyerType),
-        nullable=False
-    )
+    buyer_type = Column(Enum(BuyerType),nullable=False)
 
     delivery_address = Column(Text, nullable=False)
     delivery_city = Column(String(150), nullable=False)
     delivery_pincode = Column(String(10), nullable=False)
 
-    status = Column(
-        Enum(VendorOrderStatus),
-        default=VendorOrderStatus.PENDING
-    )
+    status = Column(Enum(VendorOrderStatus),default=VendorOrderStatus.PENDING)
 
-    tracking_id = Column(
-        String(100),
-        unique=True,
-        nullable=False
-    )
+    tracking_id = Column(String(100),unique=True,nullable=False)
 
     notes = Column(Text, nullable=True)
+    
+    estimated_delivery_date    = Column(Date, nullable=True)
 
-    created_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc)
-    )
 
-    updated_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
-    )
+    created_at = Column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc))
 
-    delivered_at = Column(
-        DateTime(timezone=True),
-        nullable=True
-    )
+    updated_at = Column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
+
+    delivered_at = Column(DateTime(timezone=True),nullable=True)
 
     # Relationship with VendorProduct
-    vendor_product_model = relationship(
-        "VendorProduct",
-        back_populates="orders"
-    )
+    vendor_product_model = relationship("VendorProduct",back_populates="orders")
 
     # Relationship with User
-    buyer = relationship(
-        "User",
-        back_populates="vendor_orders"
-    )
+    buyer = relationship("User",back_populates="vendor_orders")
+    
+    
+    def __repr__(self):
+        return (
+            f"<VendorOrder id={self.id} crop={self.crop_name} "
+            f"buyer_type={self.buyer_type} status={self.status}>"
+        )
