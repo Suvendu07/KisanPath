@@ -5,7 +5,6 @@ from app.models.farmer_product_model import Product
 from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
 from app.models.order_model import Order, OrderItem, OrderStatus
-from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 import uuid
 from app.services import tracking_service
 from app.models.payment_model import OrderType
