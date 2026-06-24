@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.user_model import User
 from app.models.farmer_product_model import Product
 from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
 from app.models.order_model import Order, OrderItem, OrderStatus
+from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 import uuid
-
-
+from app.services import tracking_service
+from app.models.payment_model import OrderType
 
 
 DELIVERY_CHARGE = 40.0
@@ -115,6 +116,50 @@ def browse_product(category, search, min_price, max_price, is_organic, db : Sess
     return result
 
 
+
+def get_product_details(product_id : int, db : Session) -> dict:
+    
+    product = db.query(Product).filter(Product.id == product_id).first()
+    
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found.")
+    
+    
+    farmer = db.query(Farmer).filter(Farmer.id == product.farmer_id).first()
+    feedbacks = db.query(Feedback).filter(Feedback.product_id == product_id).all()
+    
+    
+    reviews = [
+        {
+            "rating" : fb.rating,
+            "title" : fb.title,
+            "review" : fb.review,
+            "image" : fb.image,
+            "created_at" : fb.created_at,
+            "user_name" : fb.user.full_name if fb.user else "Anonymous",
+        }
+        
+        for fb in feedbacks
+    ]
+    
+    return {
+        "id": product.id,
+        "name":  product.name,
+        "description": product.description,
+        "category": product.category,
+        "image": product.image,
+        "price_per_unit":  product.price_per_unit,
+        "unit": product.unit,
+        "stock_quantity":  product.stock_quantity,
+        "average_rating":  product.average_rating,
+        "total_ratings": product.total_ratings,
+        "is_organic": product.is_organic,
+        "farmer_name": farmer.user.full_name if farmer and farmer.user else None,
+        "farmer_location": farmer.farm_location  if farmer else None,
+        "reviews": reviews,
+    }
+ 
+    
 
 
 def place_order(payload, user , db : Session):
@@ -247,6 +292,28 @@ def get_order_details(order_id, user, db : Session):
         ]
     }
 
+
+def get_order_tracking(user: User, order_id: int, db: Session) -> dict:
+    """Buyer views the full Amazon/Flipkart-style timeline for their order."""
+    
+    order = db.query(Order).filter(
+        Order.id       == order_id,
+        Order.buyer_id == user.id,
+    ).first()
+ 
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+ 
+    events = tracking_service.get_timeline_events(db, OrderType.PRODUCT, order_id)
+ 
+    return {
+        "order_id": order.id,
+        "order_type": "product",
+        "current_status": order.status,
+        "tracking_id": order.tracking_id,
+        "estimated_delivery_date":  order.estimated_delivery_date,
+        "timeline": events,
+    }
 
 
 
