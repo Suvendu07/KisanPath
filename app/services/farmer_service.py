@@ -2,16 +2,10 @@ import os
 import uuid
 import shutil
 
-from fastapi import (
-    status,
-    HTTPException,
-    Depends,
-    UploadFile
+from fastapi import (status,HTTPException,Depends,UploadFile
 )
 
-from sqlalchemy.orm import (
-    Session,
-    joinedload
+from sqlalchemy.orm import (Session,joinedload
 )
 
 from app.config import settings
@@ -21,11 +15,26 @@ from app.models.farmer_product_model import Product
 from app.models.order_model import OrderItem
 
 from app.schemas.farmer import (
-    ProductResponse
+    ProductResponse,
+    FarmerProfileResponse,
+    FarmerProfileUpdate,
+    ProductCreate,
+    ProductUpdate
 )
+
 
 from app.core.permision import require_farmer
 from app.database import get_db
+
+
+from app.models.order_model import Order, OrderStatus
+from app.models.payment_model import OrderType
+from app.services import tracking_service
+ 
+ 
+
+FARMER_ALLOWED_STATUSES = {OrderStatus.PROCESSING, OrderStatus.SHIPPED}
+
 
 
 ALLOWED_IMAGE_TYPES = {
@@ -394,6 +403,26 @@ def delete_product(
 
 
 
+
+def upload_product_image(farmer, product_id : int, file : UploadFile, db : Session) -> dict:
+    
+    product = db.query(Product).filter(Product.id == product_id, Product.farmer_id == farmer.id).first()
+    
+    
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found.")
+    
+    path = save_upload(file, "product_images")
+    product.image = path
+    db.commit()
+    
+    return{
+        "message" : "Product image updated.","image_url" : f"/{path}"
+    }
+    
+    
+
+
 def get_farmer_orders(
     farmer,
     db: Session
@@ -432,3 +461,61 @@ def get_farmer_orders(
             })
 
     return result
+
+
+
+
+def update_order_status(farmer, order_id : int, new_status : OrderStatus, db : Session) -> dict:
+    
+    has_item = (db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
+                )
+    
+    if not has_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found or doesn't contain your products.")
+    
+    
+    if new_status not in FARMER_ALLOWED_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Farmers can pn;y set status to 'processing' or 'shipped'."
+            "delivery and cancellation are handled by admin/buyer."
+        )
+        
+        
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if order.status in (OrderStatus.CANCELLED, OrderStatus.DELIVERED):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"can't update - order is already '{order.status}'.")
+    
+    
+    order.status = new_status
+    tracking_service.add_tracking_event(db , OrderType.PRODUCT, order.id, new_status.value)
+    db.commit()
+    
+    
+    return {
+        "message" : f"Order #{order.id} markedd as '{new_status.value}'."
+    }    
+    
+    
+    
+    
+def get_order_tracking(farmer, order_id : int , db : Session) -> dict:
+    
+    has_item = db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
+    
+    if not has_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found or does't contain your products.")
+    
+    
+    order = db.query(Order).filter(Order.id == order_id).first()
+    events = tracking_service.get_timeline_events(db, OrderType.PRODUCT, order_id)
+    
+    
+    return {
+        "order_id":                 order.id,
+        "order_type":               "product",
+        "current_status":           order.status,
+        "tracking_id":              order.tracking_id,
+        "estimated_delivery_date":  order.estimated_delivery_date,
+        "timeline":                 events,
+    }
