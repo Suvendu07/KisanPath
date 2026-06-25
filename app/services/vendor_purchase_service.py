@@ -5,11 +5,16 @@ from sqlalchemy.orm import Session
 
 from app.models.user_model import User
 from app.models.vendor_product_model import VendorProduct
-from app.models.vendor_order import VendorOrder, BuyerType
+from app.models.vendor_order import VendorOrder, BuyerType,VendorOrderStatus
 from app.services.vendor_service import get_vendor
 from app.schemas.vendor_product import  VendorProductResponse, VendorOrderResponse
+from app.services import tracking_service
+from app.models.payment_model import OrderType
 
 
+
+
+VENDOR_ALLOWED_STATUS = {VendorOrderStatus.PROCESSING, VendorOrderStatus.SHIPPED}
 
 
 
@@ -108,6 +113,8 @@ def browse_vendor_product(crop_name, db):
     ).all()
 
     return [build_listing_response(i, db) for i in data]
+
+
 
 
 def get_vendor_listing_details(listing_id , db : Session):
@@ -247,3 +254,56 @@ def get_vendor_order_detail(order_id: int, buyer: User,  db: Session) -> VendorO
         raise HTTPException(status_code=404, detail="Order not found.")
  
     return order
+
+
+
+
+
+def get_vendor_order_tracking(buyer : User, order_id : int, db : Session) -> dict:
+    
+    order = db.query(VendorOrder).filter(VendorOrder.id == order_id, VendorOrder.buyer_id == buyer.id).first()
+    
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    
+    events = tracking_service.get_timeline_events(db , OrderType.VENDOR, order_id)
+    
+    
+    return {
+        "order_id" : order.id,
+        "order_type" : "vendor",
+        "current_status" : order.status,
+        "tracking_id" : order.tracking_id,
+        "estimated_delivery_date" : order.estimated_delivery_date,
+        "timeline" : events
+    } 
+    
+    
+    
+    
+def get_incoming_orders(user : User, db : Session) -> list:
+    
+    orders = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+              .filter(VendorProduct.vendor_id == user.id)
+              .order_by(VendorProduct.created_at.desc()).all()
+              )
+    
+    
+    return [
+        {
+            "order_id":     o.id,
+            "crop_name":    o.crop_name,
+            "quantity":     o.quantity,
+            "unit":         o.unit,
+            "total_amount": o.total_amount,
+            "buyer_type":   o.buyer_type,
+            "status":       o.status,
+            "tracking_id":  o.tracking_id,
+            "created_at":   o.created_at,
+        }
+        for o in orders
+    ]
+
+
+
+
