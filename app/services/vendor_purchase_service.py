@@ -307,3 +307,58 @@ def get_incoming_orders(user : User, db : Session) -> list:
 
 
 
+def update_vendor_order_status(
+    user : User, order_id : int, new_status : VendorOrderStatus, db : Session
+) -> dict:
+    
+    
+    order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+             .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id).first()
+    )
+    
+    
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+    
+    
+    if new_status not in VENDOR_ALLOWED_STATUS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Vendors can only set status to 'processing' or 'shipped'. "
+                   "Delivery and cancellation are handled by admin/buyer.")
+        
+        
+    if order.status in (VendorOrderStatus.CANCELLED, VendorOrderStatus.DELIVERED):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Can't update - order is already '{order.status}")
+    
+    
+    order.status == new_status
+    tracking_service.add_tracking_event(db , OrderType.VENDOR, order.id , new_status.value)
+    db.commit()
+    
+    
+    return {
+        "message" : f"Order #{order.id} marked as '{new_status.value}"
+    }
+    
+    
+    
+
+def get_seller_vendor_order_tracking(user : User, order_id : int , db : Session) -> dict:
+    
+    order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+             .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id)
+             .first())
+    
+    
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+    
+    events = tracking_service.get_timeline_events(db, OrderType.VENDOR, order_id)
+    
+    return {
+        "order_id":                 order.id,
+        "order_type":               "vendor",
+        "current_status":           order.status,
+        "tracking_id":              order.tracking_id,
+        "estimated_delivery_date":  order.estimated_delivery_date,
+        "timeline":                 events,
+    }
