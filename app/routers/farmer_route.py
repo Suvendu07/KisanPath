@@ -23,13 +23,16 @@ from app.services.farmer_service import (
     create_products,
     update_product,
     delete_product,
-    get_farmer_orders
+    get_farmer_orders,
+    upload_product_image,
+    get_order_tracking,
 )
 
-from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail
+from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail, get_vendor_order_tracking
 from app.models.vendor_order import BuyerType
 from app.schemas.vendor_product import VendorPurchaseRequest
 from app.core.permision import require_farmer
+from app.schemas.tracking import FarmerOrderStatusUpdate
 
 
 
@@ -91,6 +94,8 @@ def list_product_route(
     return list_products(farmer, db)
 
 
+
+
 @router.post("/products/create")
 def create_product_route(
     payload: ProductCreate = Depends(ProductCreate.as_form),
@@ -99,6 +104,8 @@ def create_product_route(
     db: Session = Depends(get_db)
 ):
     return create_products(payload, image, farmer, db)
+
+
 
 
 @router.put("/products/{product_id}")
@@ -111,6 +118,8 @@ def update_product_route(
     return update_product(product_id, payload, farmer, db)
 
 
+
+
 @router.delete("/products/{product_id}")
 def delete_product_route(
     product_id: int,
@@ -118,6 +127,15 @@ def delete_product_route(
     db: Session = Depends(get_db)
 ):
     return delete_product(product_id, farmer, db)
+
+
+
+
+@router.put("/products/{product_id}/image")
+def upload_product(product_id : int, file : UploadFile = File(...), current_user : User = Depends(require_farmer), db : Session = Depends(get_db),):
+    
+    return upload_product_image(current_user, product_id, file, db)
+
 
 
 
@@ -168,3 +186,27 @@ def farmer_vendor_order_history(current_user : User = Depends(require_farmer), b
 def farme_vendor_order_details( order_id : int, buyer : User = Depends(require_farmer),db : Session = Depends(get_db)):
     
     return get_vendor_order_detail(order_id, buyer, db)
+
+
+
+
+@router.put("orders/{order_id}/status")
+def update_order_status(order_id :int, payload : FarmerOrderStatusUpdate, current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
+    
+    return update_order_status(current_user, order_id, payload.status, db)
+
+
+
+
+@router.get("/orders/{order_id}/tracking")
+def order_tracking(order_id : int, current_user : User = Depends(require_farmer), db : Session = Depends(get_db),):
+    
+    return get_order_tracking(current_user, order_id, db)
+
+
+
+
+@router.get("/vendor-orders/{order_id}/tracking")
+def vendor_order_tracking(order_id : int, current_user : User = Depends(require_farmer), db : Session = Depends(get_db),):
+    
+    return get_vendor_order_tracking(current_user, order_id, db)

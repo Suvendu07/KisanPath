@@ -465,7 +465,7 @@ def get_farmer_orders(
 
 
 
-def update_order_status(farmer, order_id : int, new_status : OrderStatus, db : Session) -> dict:
+def update_order_status(farmer, order_id , new_status : OrderStatus, db : Session) -> dict:
     
     has_item = (db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
                 )
