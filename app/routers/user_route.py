@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
-from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product, place_order,list_order, get_order_details, submit_feedback, list_own_feedback
+from app.services.user_service import get_dashboard, get_profile, update_profile, browse_product, place_order,list_order, get_order_details, submit_feedback, list_own_feedback, get_product_details, get_order_tracking
 from app.core.permision import require_user
 from app.database import get_db
-from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail
+from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail, get_vendor_order_tracking
 from app.models.vendor_order import BuyerType
 from app.schemas.vendor_product import VendorPurchaseRequest, VendorOrderResponse
 
@@ -46,6 +46,14 @@ def update(payload : UserProfileUpdate, user : User = Depends(require_user), db 
 def browse(category : str = None, search : str = None, min_price : float = None, max_price : float = None, is_organic : bool = None, db : Session = Depends(get_db)):
     
     return browse_product(category, search, min_price, max_price, is_organic, db)
+
+
+
+
+@router.get("/products/{product_id}")
+def product_details(product_id : int, current_user : User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return product_details(product_id, db)
 
 
 
@@ -129,3 +137,19 @@ def user_vendor_order_history(current_user : User = Depends(require_user), buyer
 def user_vendor_order_details( order_id : int, buyer : User = Depends(require_user),db : Session = Depends(get_db)):
     
     return get_vendor_order_detail(order_id, buyer, db)
+
+
+
+
+@router.get("order/{order_id}/tracking")
+def track_order(order_id : int, current_user: User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return get_order_tracking(current_user, order_id, db)
+
+
+
+
+@router.get("/vendor-orders/{order_id}/tracking")
+def track_vendor_order(order_id : int, current_user : User = Depends(require_user), db : Session = Depends(get_db)):
+    
+    return get_vendor_order_tracking(current_user, order_id, db)
