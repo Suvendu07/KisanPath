@@ -259,7 +259,7 @@ def get_vendor_order_detail(order_id: int, buyer: User,  db: Session) -> VendorO
 
 
 
-def get_vendor_order_tracking(buyer : User, order_id : int, db : Session) -> dict:
+def get_vendor_order_tracking(buyer , order_id , db : Session) -> dict:
     
     order = db.query(VendorOrder).filter(VendorOrder.id == order_id, VendorOrder.buyer_id == buyer.id).first()
     

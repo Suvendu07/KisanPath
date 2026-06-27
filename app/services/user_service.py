@@ -292,7 +292,7 @@ def get_order_details(order_id, user, db : Session):
     }
 
 
-def get_order_tracking(user: User, order_id: int, db: Session) -> dict:
+def get_order_tracking(user, order_id, db: Session) -> dict:
     """Buyer views the full Amazon/Flipkart-style timeline for their order."""
     
     order = db.query(Order).filter(
