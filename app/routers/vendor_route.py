@@ -7,7 +7,8 @@ from app.core.permision import require_vendor, get_current_user
 from sqlalchemy.orm import Session
 from app.schemas.vendor import  VendorProfileUpdate,MandiPriceCreate, MandiPriceUpdate
 from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate
-from app.services.vendor_purchase_service import list_vendor_product, create_vendor_product, update_vendor_Product, delete_vendor_product, browse_vendor_product, get_vendor_listing_details
+from app.services.vendor_purchase_service import list_vendor_product, create_vendor_product, update_vendor_Product, delete_vendor_product, browse_vendor_product, get_vendor_listing_details, get_incoming_orders, update_vendor_order_status, get_seller_vendor_order_tracking
+from app.schemas.tracking import VendorOrderStatusupdate
 
 
 
@@ -131,3 +132,41 @@ def browse_product(current_user : User = Depends(get_current_user), crop_name : 
 def get_vendor_listings(listing_id : int , db : Session = Depends(get_db)):
     
     return get_vendor_listing_details(listing_id, db)
+
+
+
+
+ 
+ 
+@router.get("/incoming-orders")
+def incoming_orders(
+    current_user: User = Depends(require_vendor),
+    db: Session = Depends(get_db),
+):
+    return get_incoming_orders(current_user, db)
+ 
+ 
+ 
+ 
+@router.put("/incoming-orders/{order_id}/status")
+def update_incoming_order_status(
+    order_id: int,
+    payload: VendorOrderStatusupdate,
+    current_user: User = Depends(require_vendor),
+    db: Session = Depends(get_db),
+):
+
+    return update_vendor_order_status(
+        current_user, order_id, payload.status, db
+    )
+ 
+ 
+ 
+ 
+@router.get("/incoming-orders/{order_id}/tracking")
+def incoming_order_tracking(
+    order_id: int,
+    current_user: User = Depends(require_vendor),
+    db: Session = Depends(get_db),
+):
+    return get_seller_vendor_order_tracking(current_user, order_id, db)
