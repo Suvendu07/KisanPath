@@ -8,7 +8,8 @@ from app.models.farmer_model import Farmer
 from app.models.vendor_model import Vendor
 from app.models.vendor_order import VendorOrder
 from app.models.farmer_product_model import Product
-from app.models.order_model import Order
+from app.models.order_model import Order, OrderStatus
+from app.models.payment_model import OrderType
 from app.schemas.admin import (
     DashboardStats,
     UserListItem,
@@ -17,22 +18,24 @@ from app.schemas.admin import (
     OrderStatusUpdate,
 )
 
+from app.services import tracking_service
+
 
 def get_dashboard(db: Session) -> DashboardStats:
-    all_orders    = db.query(Order).all()
-    revenue_sum   = sum(
+    all_orders = db.query(Order).all()
+    revenue_sum = sum(
         o.final_amount for o in all_orders if o.status == "delivered"
     )
 
     return DashboardStats(
-        total_users              = db.query(User).count(),
-        total_farmers            = db.query(User).filter(User.role == UserRole.FARMER).count(),
-        total_vendors            = db.query(User).filter(User.role == UserRole.VENDOR).count(),
-        total_buyers             = db.query(User).filter(User.role == UserRole.USER).count(),
-        total_products           = db.query(Product).count(),
-        total_orders             = db.query(Order).count(),
-        pending_orders           = db.query(Order).filter(Order.status == "pending").count(),
-        total_revenue            = round(revenue_sum, 2),
+        total_users = db.query(User).count(),
+        total_farmers = db.query(User).filter(User.role == UserRole.FARMER).count(),
+        total_vendors = db.query(User).filter(User.role == UserRole.VENDOR).count(),
+        total_buyers = db.query(User).filter(User.role == UserRole.USER).count(),
+        total_products = db.query(Product).count(),
+        total_orders = db.query(Order).count(),
+        pending_orders = db.query(Order).filter(Order.status == "pending").count(),
+        total_revenue = round(revenue_sum, 2),
         pending_farmer_approvals = db.query(Farmer).filter(Farmer.is_approved == False).count(),
         pending_vendor_approvals = db.query(Vendor).filter(Vendor.is_approved == False).count(),
     )
@@ -41,10 +44,10 @@ def get_dashboard(db: Session) -> DashboardStats:
 
 
 def list_users(
-    db:        Session,
-    role:      str  = None,
+    db: Session,
+    role: str  = None,
     is_active: bool = None,
-    search:    str  = None,
+    search: str  = None,
 ) -> list:
     query = db.query(User)
     if role:
@@ -114,15 +117,15 @@ def list_farmers(is_approved: bool, db: Session) -> list:
 
     return [
         {
-            "farmer_id":     f.id,
-            "user_id":       f.user_id,
-            "full_name":     f.user.full_name if f.user else None,
-            "email":         f.user.email     if f.user else None,
-            "farm_name":     f.farm_name,
+            "farmer_id": f.id,
+            "user_id": f.user_id,
+            "full_name": f.user.full_name if f.user else None,
+            "email": f.user.email     if f.user else None,
+            "farm_name": f.farm_name,
             "farm_location": f.farm_location,
-            "is_approved":   f.is_approved,
+            "is_approved": f.is_approved,
             "kisan_id" : f.kisan_id,
-            "created_at":    f.created_at,
+            "created_at": f.created_at,
         }
         for f in query.all()
     ]
@@ -153,17 +156,17 @@ def list_vendors(is_approved: bool, db: Session) -> list:
 
     return [
         {
-            "vendor_id":      v.id,
-            "user_id":        v.user_id,
-            "full_name":      v.user.full_name  if v.user else None,
-            "email":          v.user.email      if v.user else None,
+            "vendor_id": v.id,
+            "user_id": v.user_id,
+            "full_name": v.user.full_name  if v.user else None,
+            "email": v.user.email      if v.user else None,
             "business_name":  v.business_name,
             "business_type":  v.business_type,
-            "gst_number":     v.gst_number,
+            "gst_number": v.gst_number,
             "license_number": v.license_number,
-            "mandi_name":     v.mandi_name,
-            "is_approved":    v.is_approved,
-            "created_at":     v.created_at,
+            "mandi_name": v.mandi_name,
+            "is_approved": v.is_approved,
+            "created_at": v.created_at,
         }
         for v in query.all()
     ]
@@ -193,12 +196,12 @@ def list_all_orders(order_status: str, db: Session) -> list:
 
     return [
         {
-            "order_id":     o.id,
-            "buyer_name":   o.buyer.full_name if o.buyer else None,
-            "status":       o.status,
+            "order_id": o.id,
+            "buyer_name": o.buyer.full_name if o.buyer else None,
+            "status": o.status,
             "final_amount": o.final_amount,
-            "tracking_id":  o.tracking_id,
-            "created_at":   o.created_at,
+            "tracking_id": o.tracking_id,
+            "created_at": o.created_at,
         }
         for o in query.order_by(Order.created_at.desc()).all()
     ]
@@ -213,16 +216,16 @@ def list_all_vendor_orders(order_status: str, db: Session) -> list:
 
     return [
         {
-            "order_id":     o.id,
-            "buyer_id":     o.buyer_id,
-            "buyer_type":   o.buyer_type,
-            "vendor_id":    o.vendor_product_model.vendor_id if o.vendor_product_model else None,
-            "crop_name":    o.crop_name,
-            "quantity":     o.quantity,
-            "unit":         o.unit,
-            "status":       o.status,
+            "order_id": o.id,
+            "buyer_id": o.buyer_id,
+            "buyer_type": o.buyer_type,
+            "vendor_id": o.vendor_product_model.vendor_id if o.vendor_product_model else None,
+            "crop_name": o.crop_name,
+            "quantity": o.quantity,
+            "unit": o.unit,
+            "status": o.status,
             "total_amount": o.total_amount,
-            "created_at":   o.created_at,
+            "created_at": o.created_at,
         }
         for o in query.order_by(VendorOrder.created_at.desc()).all()
     ]
@@ -238,10 +241,18 @@ def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) 
     order.status = payload.status
     if payload.tracking_id:
         order.tracking_id = payload.tracking_id
+        
     if payload.notes:
         order.notes = payload.notes
+        
     if payload.status == "delivered":
         order.delivered_at = datetime.utcnow()
+        
+    tracking_service.add_tracking_event(
+        db, OrderType.PRODUCT, order.id, status=payload.status.value if hasattr(payload.status, "value") else payload.status,
+        custom_description=payload.notes,
+    )
+    
 
     db.commit()
     return {"message": f"Order {order_id} status updated to '{payload.status}'."}
@@ -258,16 +269,18 @@ def list_all_products(is_available: bool, db: Session) -> list:
 
     return [
         {
-            "product_id":   p.id,
-            "name":         p.name,
-            "category":     p.category,
-            "price":        p.price_per_unit,
-            "stock":        p.stock_quantity,
+            "product_id": p.id,
+            "name": p.name,
+            "category": p.category,
+            "price": p.price_per_unit,
+            "stock": p.stock_quantity,
             "is_available": p.is_available,
-            "farmer_id":    p.farmer_id,
+            "farmer_id": p.farmer_id,
         }
         for p in query.all()
     ]
+
+
 
 
 def delete_product(product_id: int, db: Session) -> None:
