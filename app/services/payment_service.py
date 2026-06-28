@@ -220,218 +220,367 @@ def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
 
 
 
-# def refund_payment(payload, db: Session) -> RefundResponse:
+# # def refund_payment(payload, db: Session) -> RefundResponse:
 
-#     payment = (
-#         db.query(Payment)
-#         .filter(Payment.id == payload.payment_id)
-#         .first()
-#     )
+# #     payment = (
+# #         db.query(Payment)
+# #         .filter(Payment.id == payload.payment_id)
+# #         .first()
+# #     )
 
+# #     if not payment:
+# #         raise HTTPException(
+# #             status_code=status.HTTP_404_NOT_FOUND,
+# #             detail="Payment not found."
+# #         )
+
+# #     # Already refunded
+# #     if payment.status == PaymentStatus.REFUND:
+# #         raise HTTPException(
+# #             status_code=status.HTTP_400_BAD_REQUEST,
+# #             detail="Payment has already been refunded."
+# #         )
+
+# #     # Only paid payments can be refunded
+# #     if payment.status != PaymentStatus.PAID:
+# #         raise HTTPException(
+# #             status_code=status.HTTP_400_BAD_REQUEST,
+# #             detail=f"Cannot refund payment with status '{payment.status.value}'."
+# #         )
+
+# #     refund_amount = payload.refund_amount or payment.amount
+
+# #     # Validate refund amount
+# #     if refund_amount <= 0:
+# #         raise HTTPException(
+# #             status_code=status.HTTP_400_BAD_REQUEST,
+# #             detail="Refund amount must be greater than 0."
+# #         )
+
+# #     if refund_amount > payment.amount:
+# #         raise HTTPException(
+# #             status_code=status.HTTP_400_BAD_REQUEST,
+# #             detail=(
+# #                 f"Refund amount {refund_amount} exceeds "
+# #                 f"paid amount {payment.amount}."
+# #             )
+# #         )
+
+# #     client = get_razorpay_client()
+
+# #     try:
+
+# #         refund = client.payment.refund(
+# #             payment.razorpay_payment_id,
+# #             {
+# #                 "amount": int(refund_amount * 100),  # paise
+# #                 "notes": {
+# #                     "reason": payload.reason or "Refund requested by admin"
+# #                 }
+# #             }
+# #         )
+
+# #         # Update payment record
+# #         payment.status = PaymentStatus.REFUND
+# #         payment.refund_id = refund.get("id")
+# #         payment.refund_amount = refund_amount
+# #         payment.refund_reason = payload.reason
+
+# #         # Product order refund
+# #         if (
+# #             payment.order_type == OrderType.PRODUCT
+# #             and payment.product_order_id
+# #         ):
+
+# #             order = (
+# #                 db.query(Order)
+# #                 .filter(Order.id == payment.product_order_id)
+# #                 .first()
+# #             )
+
+# #             if order:
+# #                 order.status = OrderStatus.CANCELLED
+
+# #         # Vendor order refund
+# #         elif (
+# #             payment.order_type == OrderType.VENDOR
+# #             and payment.vendor_order_id
+# #         ):
+
+# #             vendor_order = (
+# #                 db.query(VendorOrder)
+# #                 .filter(VendorOrder.id == payment.vendor_order_id)
+# #                 .first()
+# #             )
+
+# #             if vendor_order:
+# #                 vendor_order.status = VendorOrderStatus.CANCELLED
+
+# #         db.commit()
+
+# #         db.refresh(payment)
+
+# #         return RefundResponse(
+# #             success=True,
+# #             message=f"Refund of ₹{refund_amount} processed successfully.",
+# #             refund_id=refund.get("id"),
+# #             refund_amount=refund_amount,
+# #         )
+
+# #     except BadRequestError as e:
+
+# #         db.rollback()
+
+# #         raise HTTPException(
+# #             status_code=status.HTTP_400_BAD_REQUEST,
+# #             detail=str(e)
+# #         )
+
+# #     except Exception as e:
+
+# #         db.rollback()
+
+# #         raise HTTPException(
+# #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+# #             detail=f"Refund failed: {str(e)}"
+# #         )
+        
+        
+# def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
+#     """
+#     Admin issues a refund via Razorpay.
+#     - Full refund if refund_amount is None
+#     - Partial refund if refund_amount is specified
+ 
+#     NOTE: refund status lives on Payment (status = REFUNDED), never on the
+#     order itself — the order simply becomes CANCELLED. This keeps "where is
+#     my order" (OrderStatus) separate from "where is my money" (PaymentStatus).
+#     """
+#     payment = db.query(Payment).filter(Payment.id == payload.payment_id).first()
+ 
 #     if not payment:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Payment not found."
-#         )
-
-#     # Already refunded
-#     if payment.status == PaymentStatus.REFUND:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Payment has already been refunded."
-#         )
-
-#     # Only paid payments can be refunded
+#         raise HTTPException(status_code=404, detail="Payment not found.")
+ 
 #     if payment.status != PaymentStatus.PAID:
 #         raise HTTPException(
 #             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail=f"Cannot refund payment with status '{payment.status.value}'."
+#             detail=f"Cannot refund a payment with status '{payment.status}'."
 #         )
-
-#     refund_amount = payload.refund_amount or payment.amount
-
-#     # Validate refund amount
-#     if refund_amount <= 0:
+ 
+#     if not payment.razorpay_payment_id:
 #         raise HTTPException(
 #             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Refund amount must be greater than 0."
+#             detail="Razorpay payment ID missing. Cannot process refund."
 #         )
-
+ 
+#     refund_amount = payload.refund_amount or payment.amount
 #     if refund_amount > payment.amount:
 #         raise HTTPException(
 #             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail=(
-#                 f"Refund amount {refund_amount} exceeds "
-#                 f"paid amount {payment.amount}."
-#             )
+#             detail=f"Refund amount ₹{refund_amount} exceeds paid amount ₹{payment.amount}."
 #         )
-
+ 
 #     client = get_razorpay_client()
-
-#     try:
-
-#         refund = client.payment.refund(
-#             payment.razorpay_payment_id,
-#             {
-#                 "amount": int(refund_amount * 100),  # paise
-#                 "notes": {
-#                     "reason": payload.reason or "Refund requested by admin"
-#                 }
-#             }
-#         )
-
-#         # Update payment record
-#         payment.status = PaymentStatus.REFUND
-#         payment.refund_id = refund.get("id")
-#         payment.refund_amount = refund_amount
-#         payment.refund_reason = payload.reason
-
-#         # Product order refund
-#         if (
-#             payment.order_type == OrderType.PRODUCT
-#             and payment.product_order_id
-#         ):
-
-#             order = (
-#                 db.query(Order)
-#                 .filter(Order.id == payment.product_order_id)
-#                 .first()
+ 
+#     refund = client.payment.refund(
+#         payment.razorpay_payment_id,
+#         {
+#             "amount": int(refund_amount * 100),
+#             "notes":  {"reason": payload.reason or "Requested by admin"},
+#         }
+#     )
+ 
+#     payment.status        = PaymentStatus.REFUND
+#     payment.refund_id     = refund["id"]
+#     payment.refund_amount = refund_amount
+#     payment.refund_reason = payload.reason
+ 
+#     refund_note = f"Refund of ₹{refund_amount} processed. Reason: {payload.reason or 'Not specified'}."
+ 
+#     # Cancel the linked order + log a tracking event explaining the refund
+#     if payment.order_type == OrderType.PRODUCT and payment.product_order_id:
+#         order = db.query(Order).filter(Order.id == payment.product_order_id).first()
+#         if order:
+#             order.status = OrderStatus.CANCELLED
+#             tracking_service.add_tracking_event(
+#                 db, OrderType.PRODUCT, order.id,
+#                 status="cancelled",
+#                 custom_title="Order Cancelled — Refunded",
+#                 custom_description=refund_note,
 #             )
-
-#             if order:
-#                 order.status = OrderStatus.CANCELLED
-
-#         # Vendor order refund
-#         elif (
-#             payment.order_type == OrderType.VENDOR
-#             and payment.vendor_order_id
-#         ):
-
-#             vendor_order = (
-#                 db.query(VendorOrder)
-#                 .filter(VendorOrder.id == payment.vendor_order_id)
-#                 .first()
+ 
+#     elif payment.order_type == OrderType.VENDOR and payment.vendor_order_id:
+#         v_order = db.query(VendorOrder).filter(
+#             VendorOrder.id == payment.vendor_order_id
+#         ).first()
+#         if v_order:
+#             v_order.status = VendorOrderStatus.CANCELLED
+#             tracking_service.add_tracking_event(
+#                 db, OrderType.VENDOR, v_order.id,
+#                 status="cancelled",
+#                 custom_title="Order Cancelled — Refunded",
+#                 custom_description=refund_note,
 #             )
-
-#             if vendor_order:
-#                 vendor_order.status = VendorOrderStatus.CANCELLED
-
-#         db.commit()
-
-#         db.refresh(payment)
-
-#         return RefundResponse(
-#             success=True,
-#             message=f"Refund of ₹{refund_amount} processed successfully.",
-#             refund_id=refund.get("id"),
-#             refund_amount=refund_amount,
-#         )
-
-#     except BadRequestError as e:
-
-#         db.rollback()
-
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail=str(e)
-#         )
-
-#     except Exception as e:
-
-#         db.rollback()
-
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail=f"Refund failed: {str(e)}"
-#         )
-        
-        
+ 
+#     db.commit()
+ 
+#     return RefundResponse(
+#         success       = True,
+#         message       = f"Refund of ₹{refund_amount} processed successfully.",
+#         refund_id     = refund["id"],
+#         refund_amount = refund_amount,
+#     )
+ 
+ 
+ 
 def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
-    """
-    Admin issues a refund via Razorpay.
-    - Full refund if refund_amount is None
-    - Partial refund if refund_amount is specified
- 
-    NOTE: refund status lives on Payment (status = REFUNDED), never on the
-    order itself — the order simply becomes CANCELLED. This keeps "where is
-    my order" (OrderStatus) separate from "where is my money" (PaymentStatus).
-    """
-    payment = db.query(Payment).filter(Payment.id == payload.payment_id).first()
- 
+
+    payment = (
+        db.query(Payment)
+        .filter(Payment.id == payload.payment_id)
+        .first()
+    )
+
     if not payment:
-        raise HTTPException(status_code=404, detail="Payment not found.")
- 
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found."
+        )
+
+    # Already refunded
+    if payment.status == PaymentStatus.REFUND:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment has already been refunded."
+        )
+
+    # Only PAID payments can be refunded
     if payment.status != PaymentStatus.PAID:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot refund a payment with status '{payment.status}'."
+            detail=f"Cannot refund payment with status '{payment.status.value}'."
         )
- 
+
     if not payment.razorpay_payment_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Razorpay payment ID missing. Cannot process refund."
+            detail="Razorpay payment ID missing."
         )
- 
+
     refund_amount = payload.refund_amount or payment.amount
+
+    if refund_amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refund amount must be greater than 0."
+        )
+
     if refund_amount > payment.amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Refund amount ₹{refund_amount} exceeds paid amount ₹{payment.amount}."
         )
- 
+
     client = get_razorpay_client()
- 
-    refund = client.payment.refund(
-        payment.razorpay_payment_id,
-        {
-            "amount": int(refund_amount * 100),
-            "notes":  {"reason": payload.reason or "Requested by admin"},
-        }
-    )
- 
-    payment.status        = PaymentStatus.REFUNDED
-    payment.refund_id     = refund["id"]
-    payment.refund_amount = refund_amount
-    payment.refund_reason = payload.reason
- 
-    refund_note = f"Refund of ₹{refund_amount} processed. Reason: {payload.reason or 'Not specified'}."
- 
-    # Cancel the linked order + log a tracking event explaining the refund
-    if payment.order_type == OrderType.PRODUCT and payment.product_order_id:
-        order = db.query(Order).filter(Order.id == payment.product_order_id).first()
-        if order:
-            order.status = OrderStatus.CANCELLED
-            tracking_service.add_tracking_event(
-                db, OrderType.PRODUCT, order.id,
-                status="cancelled",
-                custom_title="Order Cancelled — Refunded",
-                custom_description=refund_note,
+
+    try:
+
+        refund = client.payment.refund(
+            payment.razorpay_payment_id,
+            {
+                "amount": int(refund_amount * 100),
+                "notes": {
+                    "reason": payload.reason or "Refund requested by admin"
+                }
+            }
+        )
+
+        # Update payment
+        payment.status = PaymentStatus.REFUND
+        payment.refund_id = refund.get("id")
+        payment.refund_amount = refund_amount
+        payment.refund_reason = payload.reason
+
+        refund_note = (
+            f"Refund of ₹{refund_amount} processed. "
+            f"Reason: {payload.reason or 'Not specified'}."
+        )
+
+        # Product Order
+        if (
+            payment.order_type == OrderType.PRODUCT
+            and payment.product_order_id
+        ):
+
+            order = (
+                db.query(Order)
+                .filter(Order.id == payment.product_order_id)
+                .first()
             )
- 
-    elif payment.order_type == OrderType.VENDOR and payment.vendor_order_id:
-        v_order = db.query(VendorOrder).filter(
-            VendorOrder.id == payment.vendor_order_id
-        ).first()
-        if v_order:
-            v_order.status = VendorOrderStatus.CANCELLED
-            tracking_service.add_tracking_event(
-                db, OrderType.VENDOR, v_order.id,
-                status="cancelled",
-                custom_title="Order Cancelled — Refunded",
-                custom_description=refund_note,
+
+            if order:
+                order.status = OrderStatus.CANCELLED
+
+                tracking_service.add_tracking_event(
+                    db=db,
+                    order_type=OrderType.PRODUCT,
+                    order_id=order.id,
+                    status="cancelled",
+                    custom_title="Order Cancelled — Refunded",
+                    custom_description=refund_note,
+                )
+
+        # Vendor Order
+        elif (
+            payment.order_type == OrderType.VENDOR
+            and payment.vendor_order_id
+        ):
+
+            vendor_order = (
+                db.query(VendorOrder)
+                .filter(VendorOrder.id == payment.vendor_order_id)
+                .first()
             )
- 
-    db.commit()
- 
-    return RefundResponse(
-        success       = True,
-        message       = f"Refund of ₹{refund_amount} processed successfully.",
-        refund_id     = refund["id"],
-        refund_amount = refund_amount,
-    )
- 
- 
+
+            if vendor_order:
+                vendor_order.status = VendorOrderStatus.CANCELLED
+
+                tracking_service.add_tracking_event(
+                    db=db,
+                    order_type=OrderType.VENDOR,
+                    order_id=vendor_order.id,
+                    status="cancelled",
+                    custom_title="Order Cancelled — Refunded",
+                    custom_description=refund_note,
+                )
+
+        db.commit()
+        db.refresh(payment)
+
+        return RefundResponse(
+            success=True,
+            message=f"Refund of ₹{refund_amount} processed successfully.",
+            refund_id=refund.get("id"),
+            refund_amount=refund_amount,
+        )
+
+    except BadRequestError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Refund failed: {str(e)}"
+        )
  
 
 
