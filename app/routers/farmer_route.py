@@ -157,7 +157,7 @@ def browse_product(current_user : User = Depends(require_farmer), crop_name : st
 
 
 
-@router.get("vendor-listing/{listing_id}")
+@router.get("/vendor-listing/{listing_id}")
 def get_vendor_listing(listing_id : int, current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
     
     return get_vendor_listing_details(listing_id, db)
@@ -190,7 +190,7 @@ def farme_vendor_order_details( order_id : int, buyer : User = Depends(require_f
 
 
 
-@router.put("orders/{order_id}/status")
+@router.put("/orders/{order_id}/status")
 def update_order_status(order_id :int, payload : FarmerOrderStatusUpdate, current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
     
     return update_order_status(current_user, order_id, payload.status, db)

@@ -141,7 +141,7 @@ def user_vendor_order_details( order_id : int, buyer : User = Depends(require_us
 
 
 
-@router.get("order/{order_id}/tracking")
+@router.get("/order/{order_id}/tracking")
 def track_order(order_id : int, current_user: User = Depends(require_user), db : Session = Depends(get_db)):
     
     return get_order_tracking(current_user, order_id, db)
