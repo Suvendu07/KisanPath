@@ -70,7 +70,7 @@ def add_tracking_event(
     event = OrderTracking(
         order_type = order_type,
         product_order_id = order_id if order_type == OrderType.PRODUCT else None,
-        vendot_order_id = order_id if order_type == OrderType.VENDOR else None,
+        vendor_order_id = order_id if order_type == OrderType.VENDOR else None,
         status = status,
         title = custom_title or message["title"],
         description = custom_description or message["description"],

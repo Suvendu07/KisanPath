@@ -13,6 +13,7 @@ from app.models.user_model import User
 from app.models.farmer_model import Farmer
 from app.models.farmer_product_model import Product
 from app.models.order_model import OrderItem
+from app.models.vendor_order import VendorOrder, BuyerType
 
 from app.schemas.farmer import (
     ProductResponse,
@@ -519,3 +520,26 @@ def get_order_tracking(farmer, order_id : int , db : Session) -> dict:
         "estimated_delivery_date":  order.estimated_delivery_date,
         "timeline":                 events,
     }
+
+
+
+# def get_order_tracking(farmer, order_id, db : Session):
+    
+#     vendor_order = db.query(VendorOrder).filter(VendorOrder.id == order_id, VendorOrder.buyer_id == farmer.id, VendorOrder.buyer_type == BuyerType.FARMER).first()
+    
+#     if not vendor_order:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Vendot order not found.")
+    
+#     events = tracking_service.get_timeline_events(
+#         db , OrderType.VENDOR, vendor_order.id,
+#     )
+    
+    
+#     return {
+#         "order_id" : vendor_order.id,
+#         "order_type" : "vendor",
+#         "current_status" : vendor_order.status,
+#         "tracking_id" : vendor_order.tracking_id,
+#         "estimated_delivery_date" : vendor_order.estimated_delivery_date,
+#         "timeline" : events
+#     }
