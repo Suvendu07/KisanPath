@@ -10,6 +10,7 @@ from app.services.vendor_service import get_vendor
 from app.schemas.vendor_product import  VendorProductResponse, VendorOrderResponse
 from app.services import tracking_service
 from app.models.payment_model import OrderType
+from app.models.vendor_model import Vendor
 
 
 
@@ -283,9 +284,16 @@ def get_vendor_order_tracking(buyer , order_id , db : Session) -> dict:
     
 def get_incoming_orders(user : User, db : Session) -> list:
     
-    orders = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
-              .filter(VendorProduct.vendor_id == user.id)
-              .order_by(VendorProduct.created_at.desc()).all()
+    # orders = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+    #           .filter(VendorProduct.vendor_id == user.id)
+    #           .order_by(VendorProduct.created_at.desc()).all()
+    #           )
+    
+    orders = (db.query(VendorOrder)
+              .join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+              .join(Vendor, VendorProduct.vendor_id == Vendor.id)
+              .filter(Vendor.user_id == user.id)
+              .order_by(VendorOrder.created_at.desc()).all()
               )
     
     
@@ -312,8 +320,13 @@ def update_vendor_order_status(
 ) -> dict:
     
     
-    order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
-             .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id).first()
+    # order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+    #          .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id).first()
+    # )
+    order = (db.query(VendorOrder)
+             .join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+             .join(Vendor, VendorProduct.vendor_id == Vendor.id)
+             .filter(VendorOrder.id == order_id, Vendor.user_id == user.id).first()
     )
     
     
@@ -330,7 +343,7 @@ def update_vendor_order_status(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Can't update - order is already '{order.status}")
     
     
-    order.status == new_status
+    order.status = new_status
     tracking_service.add_tracking_event(db , OrderType.VENDOR, order.id , new_status.value)
     db.commit()
     
@@ -344,10 +357,15 @@ def update_vendor_order_status(
 
 def get_seller_vendor_order_tracking(user : User, order_id : int , db : Session) -> dict:
     
-    order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
-             .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id)
-             .first())
+    # order = (db.query(VendorOrder).join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+    #          .filter(VendorOrder.id == order_id, VendorProduct.vendor_id == user.id)
+    #          .first())
     
+    order = (db.query(VendorOrder)
+             .join(VendorProduct, VendorOrder.vendor_product_id == VendorProduct.id)
+             .join(Vendor, VendorProduct.vendor_id == Vendor.id)
+             .filter(VendorOrder.id == order_id, Vendor.user_id == user.id)
+             .first())
     
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")

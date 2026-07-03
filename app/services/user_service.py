@@ -310,7 +310,7 @@ def get_order_tracking(user, order_id, db: Session) -> dict:
         "order_type": "product",
         "current_status": order.status,
         "tracking_id": order.tracking_id,
-        "estimated_delivery_date":  order.estimated_delivery_date,
+        "estimated_delivery_date":  order.estimate_delivery_date,
         "timeline": events,
     }
 

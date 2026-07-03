@@ -468,8 +468,19 @@ def get_farmer_orders(
 
 def update_order_status(farmer, order_id , new_status : OrderStatus, db : Session) -> dict:
     
-    has_item = (db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
-                )
+    # has_item = (db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
+    #             )
+    
+    has_item = (
+    db.query(OrderItem)
+    .join(Product, OrderItem.product_id == Product.id)
+    .join(Farmer, Product.farmer_id == Farmer.id)
+    .filter(
+        OrderItem.order_id == order_id,
+        Farmer.user_id == farmer.id
+    )
+    .first()
+)    
     
     if not has_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found or doesn't contain your products.")
@@ -481,9 +492,10 @@ def update_order_status(farmer, order_id , new_status : OrderStatus, db : Sessio
             "delivery and cancellation are handled by admin/buyer."
         )
         
-        
+
     order = db.query(Order).filter(Order.id == order_id).first()
-    
+    print(Order.id)
+    print(order_id)
     if order.status in (OrderStatus.CANCELLED, OrderStatus.DELIVERED):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"can't update - order is already '{order.status}'.")
     
