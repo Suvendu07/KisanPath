@@ -26,6 +26,7 @@ from app.services.farmer_service import (
     get_farmer_orders,
     upload_product_image,
     get_order_tracking,
+    update_order_status,
 )
 
 from app.services.vendor_purchase_service import browse_vendor_product, get_vendor_listing_details, place_vendor_purchase, get_my_vendor_orders, get_vendor_order_detail, get_vendor_order_tracking
@@ -191,7 +192,7 @@ def farme_vendor_order_details( order_id : int, buyer : User = Depends(require_f
 
 
 @router.put("/orders/{order_id}/status")
-def update_order_status(order_id :int, payload : FarmerOrderStatusUpdate, current_user : User = Depends(require_farmer), db : Session = Depends(get_db)):
+def update_status(order_id :int, payload : FarmerOrderStatusUpdate, current_user : Farmer = Depends(require_farmer), db : Session = Depends(get_db)):
     
     return update_order_status(current_user, order_id, payload.status, db)
 
@@ -199,7 +200,7 @@ def update_order_status(order_id :int, payload : FarmerOrderStatusUpdate, curren
 
 
 @router.get("/orders/{order_id}/tracking")
-def order_tracking(order_id : int, current_user : User = Depends(require_farmer), db : Session = Depends(get_db),):
+def order_tracking(order_id : int, current_user : Farmer = Depends(require_farmer), db : Session = Depends(get_db),):
     
     return get_order_tracking(current_user, order_id, db)
 
