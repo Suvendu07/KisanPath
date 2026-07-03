@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.models.user_model import UserRole
 from app.models.order_model import OrderStatus
-
+from app.models.vendor_order import VendorOrderStatus
 
 
 class DashboardStats(BaseModel):
@@ -55,5 +55,11 @@ class ApprovalAction(BaseModel):
     
 class OrderStatusUpdate(BaseModel):
     status : OrderStatus
+    tracking_id : Optional[str] = None
+    notes : Optional[str] = None
+    
+    
+class AdminVendorOrderStatusUpdate(BaseModel):
+    status : VendorOrderStatus
     tracking_id : Optional[str] = None
     notes : Optional[str] = None
