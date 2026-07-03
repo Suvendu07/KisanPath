@@ -9,6 +9,7 @@ from app.schemas.vendor import  VendorProfileUpdate,MandiPriceCreate, MandiPrice
 from app.schemas.vendor_product import VendorProductCreate, VendorProductUpdate
 from app.services.vendor_purchase_service import list_vendor_product, create_vendor_product, update_vendor_Product, delete_vendor_product, browse_vendor_product, get_vendor_listing_details, get_incoming_orders, update_vendor_order_status, get_seller_vendor_order_tracking
 from app.schemas.tracking import VendorOrderStatusupdate
+from app.services.user_service import list_order
 
 
 
@@ -170,3 +171,23 @@ def incoming_order_tracking(
     db: Session = Depends(get_db),
 ):
     return get_seller_vendor_order_tracking(current_user, order_id, db)
+
+
+
+@router.get("/purchases")
+def vendor_purchases(
+    current_user: User = Depends(require_vendor),
+    db: Session = Depends(get_db),
+):
+    return list_order(current_user, db)
+
+
+
+@router.get("/purchases/{order_id}/tracking")
+def track_vendor_purchase(
+    order_id: int,
+    current_user: User = Depends(require_vendor),
+    db: Session = Depends(get_db),
+):
+    from app.services.user_service import get_order_tracking
+    return get_order_tracking(current_user, order_id, db)
