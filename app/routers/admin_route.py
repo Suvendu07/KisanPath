@@ -9,6 +9,8 @@ from app.schemas.admin import (
     AdminUserUpdate,
     ApprovalAction,
     OrderStatusUpdate,
+    AdminVendorOrderStatusUpdate,
+
 )
 from app.services import admin_service
 
@@ -150,6 +152,16 @@ def update_order_status(
 ):
     return admin_service.update_order_status(order_id, payload, db)
 
+
+
+@router.put("/vendor-orders/{order_id}/status", summary="Update any vendor order's status")
+def update_vendor_order_status(
+    order_id:     int,
+    payload:      AdminVendorOrderStatusUpdate,
+    current_user: User    = Depends(require_admin),
+    db:           Session = Depends(get_db),
+):
+    return admin_service.update_vendor_order_status(order_id, payload, db)
 
 
 
