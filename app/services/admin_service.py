@@ -16,6 +16,7 @@ from app.schemas.admin import (
     AdminUserUpdate,
     ApprovalAction,
     OrderStatusUpdate,
+    AdminVendorOrderStatusUpdate,
 )
 
 from app.services import tracking_service
@@ -259,6 +260,22 @@ def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) 
 
 
 
+def update_vendor_order_status(order_id: int, payload: AdminVendorOrderStatusUpdate, db: Session) -> dict:
+    order = db.query(VendorOrder).filter(VendorOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Vendor order not found.")
+
+    order.status = payload.status
+    if payload.tracking_id:
+        order.tracking_id = payload.tracking_id
+        
+    tracking_service.add_tracking_event(
+        db, OrderType.VENDOR, order.id, status=payload.status.value if hasattr(payload.status, "value") else payload.status,
+        custom_description=payload.notes,
+    )
+    
+    db.commit()
+    return {"message": f"Vendor Order {order_id} status updated to '{payload.status}'."}
 
 
 
