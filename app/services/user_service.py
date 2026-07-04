@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.orm import Session
 from app.models.user_model import User
 from app.models.farmer_product_model import Product
@@ -8,9 +8,52 @@ from app.models.order_model import Order, OrderItem, OrderStatus
 import uuid
 from app.services import tracking_service
 from app.models.payment_model import OrderType
+from app.config import settings
+import os
+import shutil
+
+
 
 
 DELIVERY_CHARGE = 40.0
+
+
+
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+}
+
+
+def save_upload(file: UploadFile, subfolder: str) -> str:
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPEG, PNG, WEBP are allowed"
+        )
+    folder = os.path.join(settings.UPLOAD_DIR, subfolder)
+    os.makedirs(folder, exist_ok=True)
+    ext = file.filename.rsplit(".", 1)[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = os.path.join(folder, filename)
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return f"/uploads/{subfolder}/{filename}"
+
+
+
+
+def upload_user_image(image: UploadFile, user: User, db: Session):
+    path = save_upload(image, "user_profile")
+    user.profile_image = path
+    db.commit()
+    db.refresh(user)
+    return {
+        "message": "Image uploaded successfully",
+        "image_url": path
+    }
+
 
 
 
