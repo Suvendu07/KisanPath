@@ -15,8 +15,10 @@ from app.models.vendor_model import Vendor
 
 
 
-VENDOR_ALLOWED_STATUS = {VendorOrderStatus.PROCESSING, VendorOrderStatus.SHIPPED}
-
+VENDOR_TRANSITIONS = {
+    VendorOrderStatus.CONFIRMED: VendorOrderStatus.PROCESSING,
+    VendorOrderStatus.PROCESSING: VendorOrderStatus.SHIPPED,
+}
 
 
 def build_listing_response(listing : VendorProduct, db : Session) -> dict:
@@ -334,13 +336,30 @@ def update_vendor_order_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
     
     
-    if new_status not in VENDOR_ALLOWED_STATUS:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Vendors can only set status to 'processing' or 'shipped'. "
-                   "Delivery and cancellation are handled by admin/buyer.")
+    # if new_status not in VENDOR_ALLOWED_STATUS:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Vendors can only set status to 'processing' or 'shipped'. "
+    #                "Delivery and cancellation are handled by admin/buyer.")
+    
+    
+    allowed_next = VENDOR_TRANSITIONS.get(order.status)
+    
+    
+    if allowed_next is None:
+        
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Order is currently '{order.status.value}'."
+                            "you can no longer update its status from here.")
         
         
-    if order.status in (VendorOrderStatus.CANCELLED, VendorOrderStatus.DELIVERED):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Can't update - order is already '{order.status}")
+    if new_status != allowed_next:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"From '{order.status.value}'. you can only move the order to"
+                            f"{allowed_next.value}'.")
+        
+        
+        
+    # if order.status in (VendorOrderStatus.CANCELLED, VendorOrderStatus.DELIVERED):
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Can't update - order is already '{order.status}")
     
     
     order.status = new_status
@@ -349,7 +368,7 @@ def update_vendor_order_status(
     
     
     return {
-        "message" : f"Order #{order.id} marked as '{new_status.value}"
+        "message" : f"Order #{order.id} marked as '{new_status.value}'."
     }
     
     

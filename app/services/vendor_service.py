@@ -1,12 +1,13 @@
 from sqlalchemy.orm import Session
 from datetime import date
-from fastapi import HTTPException, Depends,status
+from fastapi import HTTPException, Depends,status, UploadFile
 from app.schemas.vendor import VendorProfileResponse, VendorProfileUpdate, MandiPriceCreate,MandiPriceUpdate, MandiPriceResponse
 from app.database import get_db
 from app.models.user_model import User
 from app.models.vendor_model import Vendor
 from app.core.permision import require_vendor
 from app.models.mandi_model import MandiPrice
+from app.services.farmer_service import save_upload
 
 
 
@@ -122,6 +123,21 @@ def update_profile(payload, current_user , db : Session):
     db.refresh(vendor)
     
     return {"message" : "Profile update successfully"}
+
+
+
+
+def upload_vendor_image(image: UploadFile, vendor: Vendor, db: Session):
+    path = save_upload(image, "vendor_image")
+    vendor.shop_image = path
+    if vendor.user:
+        vendor.user.profile_image = path
+    db.commit()
+    db.refresh(vendor)
+    return {
+        "message": "Image uploaded successfully",
+        "image_url": path
+    }
 
 
 
