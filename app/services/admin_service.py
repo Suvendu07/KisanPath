@@ -232,13 +232,39 @@ def list_all_vendor_orders(order_status: str, db: Session) -> list:
     ]
     
     
+TERMINAL_STATUS = {OrderStatus.CANCELLED, OrderStatus.DELIVERED}
     
+ALLOWED_TRANSITIONS = {
+    OrderStatus.PENDING: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+    OrderStatus.CONFIRMED: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+    OrderStatus.PROCESSING: [OrderStatus.SHIPPED],
+    OrderStatus.SHIPPED: [OrderStatus.OUT_FOR_DELIVERY],
+    OrderStatus.OUT_FOR_DELIVERY: [OrderStatus.DELIVERED],
+    OrderStatus.DELIVERED: [],
+    OrderStatus.CANCELLED: [],
+}
+
+
 
 def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) -> dict:
     order = db.query(Order).filter(Order.id == order_id).first()
+    
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
-
+    
+    if order.status in TERMINAL_STATUS:
+        raise HTTPException(status_code=400,detail=f"Order is already '{order.status.value}' and cannot be updated.")
+    
+    if payload.status == order.status:
+        raise HTTPException(
+            status_code=400,detail=f"Order is already '{order.status.value}'.")
+        
+    if payload.status not in ALLOWED_TRANSITIONS.get(order.status, []):
+       raise HTTPException(
+          status_code=400,
+          detail=f"Cannot change order status from '{order.status.value}' to '{payload.status.value}'."
+    )
+       
     order.status = payload.status
     if payload.tracking_id:
         order.tracking_id = payload.tracking_id
@@ -260,11 +286,28 @@ def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) 
 
 
 
+
 def update_vendor_order_status(order_id: int, payload: AdminVendorOrderStatusUpdate, db: Session) -> dict:
     order = db.query(VendorOrder).filter(VendorOrder.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Vendor order not found.")
+    
+    
+    if order.status in TERMINAL_STATUS:
+        raise HTTPException(status_code=400,detail=f"Order is already '{order.status.value}' and cannot be updated."
+)
+    
+    if payload.status == order.status:
+      raise HTTPException(
+        status_code=400,
+        detail=f"Order is already '{order.status.value}'.")
 
+    if payload.status not in ALLOWED_TRANSITIONS.get(order.status, []):
+        raise HTTPException(
+        status_code=400,
+        detail=f"Cannot change order status from '{order.status.value}' to '{payload.status.value}'.")
+        
+        
     order.status = payload.status
     if payload.tracking_id:
         order.tracking_id = payload.tracking_id
