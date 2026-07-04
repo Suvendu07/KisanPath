@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
@@ -30,6 +30,13 @@ def dashboard(current_user : User = Depends(require_user), db : Session = Depend
 def profile(current_user : User = Depends(require_user)):
     
     return get_profile(current_user)
+
+
+@router.post("/upload/image")
+def upload_image(image: UploadFile = File(...), current_user: User = Depends(require_user), db: Session = Depends(get_db)):
+    from app.services.user_service import upload_user_image
+    return upload_user_image(image, current_user, db)
+
 
 
 

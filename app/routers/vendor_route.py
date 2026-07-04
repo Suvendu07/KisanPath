@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from app.database import get_db
 from app.services.vendor_service import get_dashboard, get_profile, get_vendor, update_profile, get_all_prices, list_own_prices,create_price, delete_Price, update_price
 from app.models.user_model import User
@@ -41,6 +41,14 @@ def profile_update(payload : VendorProfileUpdate, current_user : User = Depends(
     
     return update_profile(payload, current_user, db)
 
+
+
+
+@router.post("/upload/image")
+def upload_image(image: UploadFile = File(...), current_user: User = Depends(require_vendor), db: Session = Depends(get_db)):
+    from app.services.vendor_service import upload_vendor_image, get_vendor_by_user
+    vendor = get_vendor_by_user(current_user, db)
+    return upload_vendor_image(image, vendor, db)
 
 
 
