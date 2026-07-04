@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     
     RAZORPAY_KEY_ID : str
     RAZORPAY_KEY_SECRET : str
+    
+    WEATHER_API_KEY : str
 
     class Config:
         env_file = ".env"
