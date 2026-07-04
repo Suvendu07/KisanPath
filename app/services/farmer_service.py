@@ -34,8 +34,7 @@ from app.services import tracking_service
  
  
 
-FARMER_ALLOWED_STATUSES = {OrderStatus.PROCESSING, OrderStatus.SHIPPED}
-
+FARMER_TRANSITIONS = {OrderStatus.CONFIRMED:  OrderStatus.PROCESSING,OrderStatus.PROCESSING: OrderStatus.SHIPPED,}
 
 
 ALLOWED_IMAGE_TYPES = {
@@ -261,6 +260,10 @@ def upload_image(
     )
 
     farmer.farm_image = path
+    
+    if farmer.user:
+        farmer.user.profile_image = path
+
 
     db.commit()
 
@@ -485,19 +488,32 @@ def update_order_status(farmer, order_id , new_status : OrderStatus, db : Sessio
     if not has_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found or doesn't contain your products.")
     
-    
-    if new_status not in FARMER_ALLOWED_STATUSES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Farmers can pn;y set status to 'processing' or 'shipped'."
-            "delivery and cancellation are handled by admin/buyer."
-        )
-        
-
     order = db.query(Order).filter(Order.id == order_id).first()
-    print(Order.id)
-    print(order_id)
-    if order.status in (OrderStatus.CANCELLED, OrderStatus.DELIVERED):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"can't update - order is already '{order.status}'.")
+    
+    
+    allowed_next = FARMER_TRANSITIONS.get(order.status)
+    
+    
+    # if new_status not in FARMER_ALLOWED_STATUSES:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="Farmers can pn;y set status to 'processing' or 'shipped'."
+    #         "delivery and cancellation are handled by admin/buyer."
+    #     )
+    if allowed_next is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Order is currently '{order.status.value}'."
+                            "You can no longer update its status from here.")
+        
+        
+    if new_status != allowed_next:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"From '{order.status.value}' you can only move the order to "
+                            f"'{allowed_next.value}'.")
+        
+    
+
+
+    # if order.status in (OrderStatus.CANCELLED, OrderStatus.DELIVERED):
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"can't update - order is already '{order.status}'.")
     
     
     order.status = new_status
@@ -514,7 +530,7 @@ def update_order_status(farmer, order_id , new_status : OrderStatus, db : Sessio
     
 def get_order_tracking(farmer, order_id : int , db : Session) -> dict:
     
-    has_item = db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == farmer.id).first()
+    has_item = db.query(OrderItem).join(Product).filter(OrderItem.order_id == order_id, Product.farmer_id == Farmer.id).first()
     
     if not has_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found or does't contain your products.")
@@ -529,7 +545,7 @@ def get_order_tracking(farmer, order_id : int , db : Session) -> dict:
         "order_type":               "product",
         "current_status":           order.status,
         "tracking_id":              order.tracking_id,
-        "estimated_delivery_date":  order.estimated_delivery_date,
+        "estimate_delivery_date":  order.estimate_delivery_date,
         "timeline":                 events,
     }
 
