@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET : str
     
     WEATHER_API_KEY : str
+    
+    CHAT_MEMORY_WINDOW : int
+    
+    KNOWLEDGE_BASE_DIR : str
+    VECTOR_STORE_DIR : str
 
     class Config:
         env_file = ".env"
