@@ -182,7 +182,7 @@ def get_current_weather(location : str) -> WeatherResponse:
     
 
 
-def weather_for_crop_recommendation(location : str) -> dict:
+def get_weather_for_crop_recommendation(location : str) -> dict:
     
     try:
         
