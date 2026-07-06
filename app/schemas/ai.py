@@ -138,6 +138,22 @@ class DiseaseDetectionResponse(BaseModel):
     description : str
     control_method : str
 
+
+class WeedInfo(BaseModel):
+    weed_name : str
+    confidence : float
+    is_weed : bool
+    description : str
+    control_method : str
+
+    
+class WeedDetectionResponse(BaseModel):
+    success : bool
+    top_prediction : WeedInfo
+    predictions : List[WeedInfo]
+    weed_detected : bool
+    model_ready : bool
+
     
 class PricePredictionRequest(BaseModel):
     crop_name : str
