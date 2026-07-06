@@ -25,7 +25,7 @@ Your expertise:
 - Organic farming and modern agri-tech
  
 Rules:
-- Always respond in the language the farmer writes in (Hindi/English/mix)
+- ALWAYS respond in the following language: {language}
 - Keep answers practical and actionable — farmers need solutions, not lectures
 - For disease/pest issues always end with: Immediate action + Preventive measure
 - For unrelated questions say: "Main sirf kheti-baadi ke baare mein madad kar sakta hoon!"
@@ -46,7 +46,7 @@ def get_llm() -> ChatGoogleGenerativeAI:
     
     
     return ChatGoogleGenerativeAI(
-        model = "gemini-2.5-flash",
+        model = "gemini-3.1-flash-lite",
         google_api_key = settings.GEMINI_API_KEY,
         temperature = 0.7,
         max_tokens = 1024,
@@ -54,13 +54,17 @@ def get_llm() -> ChatGoogleGenerativeAI:
     
     
 
-def build_chain(history : list[ChatMessage]) -> ConversationChain:
+def build_chain(history : list[ChatMessage], language : str) -> ConversationChain:
     
     llm = get_llm()
     
+    
+    formatted_template = AGRI_SYSTEM_PROMPT.replace("{language}", language)
+    
+    
     prompt = PromptTemplate(
         input_variables=["history", "input"],
-        template=AGRI_SYSTEM_PROMPT,
+        template=formatted_template,
     )
     
     
@@ -95,7 +99,7 @@ def build_chain(history : list[ChatMessage]) -> ConversationChain:
 def chat_with_agri_ai(payload : ChatRequest) -> ChatResponse:
     
     try:
-        chain, memory = build_chain(payload.history)
+        chain, memory = build_chain(payload.history, payload.language)
         reply = chain.predict(input=payload.message)
         reply = reply.strip()
         
