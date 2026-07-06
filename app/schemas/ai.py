@@ -51,6 +51,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message : str
     session_id : str
+    language : str = "English"
     history : List[ChatMessage] = []
     
     
