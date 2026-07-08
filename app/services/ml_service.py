@@ -349,4 +349,92 @@ BEST_SEASON = {
     "maize":     "Kharif / Zaid",
     "default":   "Consult local agriculture department.",
 }
- 
+
+
+
+
+def recommend_crop(payload : CropRecommendRequest) -> CropRecommendResponse:
+    
+    weather_data = get_weather_for_crop_recommendation(payload.location)
+    
+    
+    weather_obj = WeatherCondition(
+        temp_c = weather_data["temperature"],
+        humidity=int(weather_data["humidity"]),
+        rainfall_mm=weather_data["rainfall"],
+        wind_kph=0.0,
+        condition="Live data fetched",
+        icon="",
+        uv_index=0.0,
+        is_day=True,
+    )
+    
+    
+    if registry.crop_rec_model is None:
+        stub = {"crop" : "Model not loaded", "confidence": 0.0}
+        return CropRecommendResponse(
+            recommended_crop="Model not loaded.",
+            confidence = 0.0,
+            top_3_crops=[stub],
+            weather_used=weather_obj,
+            growing_tips="Training in progress.",
+            best_season="N/A", model_ready=False,
+        )
+        
+        
+        
+    x = np.array([[
+        payload.nitrogen,
+        payload.phosphorus,
+        payload.potassium,
+        weather_data["temperature"],
+        weather_data["humidity"],
+        payload.ph,
+        weather_data["rainfall"],
+    ]])
+    
+    
+    X_scaled = registry.crop_rec_scaler.transform(x)
+    proba = registry.crop_rec_model.predict_prob(X_scaled)[0]
+    top3_idx = proba.argsort()[-3:][::-1]
+    
+    top3 = [
+        {"crop": registry.crop_rec_encoder.classes_[i],
+         "confidence": round(float(proba[i]) * 100, 2)}
+        for i in top3_idx
+    ]
+    
+    
+    best = top3[0]["crop"]
+    
+    return CropRecommendResponse(
+        recommended_crop=best,
+        confidence = top3[0]["confidence"],
+        top_3_crops=top3,
+        weather_used=weather_obj,
+        growing_tips=GROWING_TIPS.get(best, GROWING_TIPS["default"]),
+        best_season=BEST_SEASON.get(best, BEST_SEASON["default"]),
+        model_ready=True,
+    )
+    
+    
+    
+def recommend_fertilizer_rule_based(
+    crop_name : str,
+    nitrogen : float,
+    phosphorus : float,
+    potassium : float,
+    soil_type : str,
+) -> dict:
+    
+    from app.ml_models.fertilizer.recommender import recommend_fertilizer
+    return recommend_fertilizer(crop_name, nitrogen, phosphorus, potassium, soil_type)
+
+def recommend_fertilizer(payload : FertilizerRecommendRequest) -> FertilizerRecommendResponse:
+    
+    result = recommend_fertilizer_rule_based(
+        payload.crop_name, payload.nitrogen,
+        payload.phosphorus, payload.potassium, payload.soil_type,
+    )
+    
+    return FertilizerRecommendResponse(**result, note=result.get("note", ""))
