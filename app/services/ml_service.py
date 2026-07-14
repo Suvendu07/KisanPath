@@ -430,6 +430,8 @@ def recommend_fertilizer_rule_based(
     from app.ml_models.fertilizer.recommender import recommend_fertilizer
     return recommend_fertilizer(crop_name, nitrogen, phosphorus, potassium, soil_type)
 
+
+
 def recommend_fertilizer(payload : FertilizerRecommendRequest) -> FertilizerRecommendResponse:
     
     result = recommend_fertilizer_rule_based(

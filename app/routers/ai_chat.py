@@ -1,8 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
-from app.schemas.ai import ChatRequest
-from app.services.langchain_service import chat_with_agri_ai
-from app.models.user_model import User
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.permision import require_admin
+from app.models.user_model import User
+from app.schemas.ai import(
+    ChatRequest, ChatResponse,
+    RagRequest, RagResponse,
+    WeatherRequest, WeatherResponse,
+    DiseaseDetectionResponse,
+    WeedDetectionResponse,
+    PricePredictionRequest, PricePredictionResponse,
+    CropRecommendRequest,CropRecommendResponse,
+    FertilizerRecommendRequest, FertilizerRecommendResponse,
+)
+
+from app.services import langchain_service, rag_service, langgraph_agent, weather_service, ml_service
+
 
 
 router = APIRouter(tags=["AI"])
@@ -28,4 +43,7 @@ def handle_service_error(fn, *args, **kwargs):
 @router.post("/chat")
 def chat(payload : ChatRequest, current_user : User = Depends(get_current_user)):
     
-    return handle_service_error(chat_with_agri_ai, payload)
+    return handle_service_error(langchain_service.chat_with_agri_ai, payload)
+
+
+
