@@ -41,7 +41,7 @@ def handle_service_error(fn, *args, **kwargs):
         
         
 @router.post("/chat")
-def chat(payload : ChatRequest, current_user : User = Depends(get_current_user)):
+def chat(payload : ChatRequest, current_user = Depends(get_current_user)):
     
     return handle_service_error(langchain_service.chat_with_agri_ai, payload)
 
