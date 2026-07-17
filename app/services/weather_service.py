@@ -82,7 +82,9 @@ def get_current_weather(location : str) -> WeatherResponse:
                             detail="weather API key not configured. Add WEATHER_API_KEY to your .env file.")
         
         
-    url = f"{settings.WEATHER_API_KEY}/forecast.json"
+    # url = f"{settings.WEATHER_API_KEY}/forecast.json"
+    url = "http://api.weatherapi.com/v1/forecast.json"
+    
     
     params = {
         "key" : settings.WEATHER_API_KEY,
