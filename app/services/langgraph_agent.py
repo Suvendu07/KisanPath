@@ -14,7 +14,7 @@ from app.schemas.ai import AgentRequest, AgentResponse, AgentStep
 
 class AgentState(TypedDict):
     messages : Annotated[Sequence[BaseMessage], lambda x,y:x+y]
-    setps : list[dict]
+    steps : list[dict]
     location : str | None
     context : str | None
     
@@ -44,7 +44,8 @@ Always respond in simple language. Use bullet points. End with a Pro Tip 🌱.""
 # tools the agent can call
 @tool
 def get_weather_tool(location : str) -> str:
-    
+    """Get the current weather information for a given location."""
+
     try:
         from app.services.weather_service import get_current_weather
         w = get_current_weather(location)
@@ -62,7 +63,7 @@ def get_weather_tool(location : str) -> str:
                     "date" : d.date,
                     "condition" : d.condition,
                     "rain_mm" : d.total_rain_mm,
-                    "farmin_tip" : d.farming_tip,
+                    "farming_tip" : d.farming_tip,
                 }
                 for d in w.forecast
             ],            
@@ -77,6 +78,7 @@ def get_weather_tool(location : str) -> str:
 @tool
 def recommend_crop_tool(nitrogen : float, phosphorus : float, potassium : float, ph : float, location : str) -> str:
     
+    """Recommend the best crop based on soil nutrients and weather."""
     try:
         from app.services.weather_service import get_weather_for_crop_recommendation
         from app.services.ml_service import recommend_crop
@@ -119,7 +121,7 @@ def recommend_crop_tool(nitrogen : float, phosphorus : float, potassium : float,
 
 @tool
 def recommend_fertilizer_tool(crop_name : str,nitrogen : float, phosphorus : float, potassium : float, soil_type : str) -> str:
-    
+    """Recommend fertilizer based on crop, soil type, and NPK values."""
     try:
         from app.services.ml_service import recommend_fertilizer_rule_based
         
@@ -140,7 +142,7 @@ def recommend_fertilizer_tool(crop_name : str,nitrogen : float, phosphorus : flo
     
 @tool
 def get_price_tool(crop_name : str, state : str) -> str:
-    
+    """Predict mandi price for a crop."""
     try:
         from app.services.ml_service import predict_price
         from datetime import datetime
@@ -160,8 +162,8 @@ def get_price_tool(crop_name : str, state : str) -> str:
         
         if not result.model_today:
             return(
-                f"Price predication model is not loaded."
-                f"Check current rates at agmarknet.got.in for {crop_name} in {state}."
+                f"Price prediction model is not loaded."
+                f"Check current rates at agmarknet.gov.in for {crop_name} in {state}."
             )
             
             
@@ -184,7 +186,7 @@ def get_price_tool(crop_name : str, state : str) -> str:
 @tool
 def ask_knowledge_base_tool(question : str) -> str:
     
-    
+    """Search the farming knowledge base for an answer."""
     try:
         from app.services.rag_service import ask_farming_docs
         from app.schemas.ai import RagRequest
@@ -205,7 +207,7 @@ ALL_TOOLS = [
 def build_agent_graph():
     
     if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEy not configured.")
+        raise ValueError("GEMINI_API_KEY not configured.")
     
     
     llm = ChatGoogleGenerativeAI(
@@ -223,8 +225,8 @@ def build_agent_graph():
         
         step = {
             "step_name" : "agent_reasoning",
-            "input" : state["message"][-1].content if state["messages"] else "",
-            "ouput" : response.content or "(calling tool...)",
+            "input" : state["messages"][-1].content if state["messages"] else "",
+            "output" : response.content or "(calling tool...)",
             "tool_used" : None
         }
         
