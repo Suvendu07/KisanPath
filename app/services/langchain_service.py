@@ -21,6 +21,7 @@ Your expertise:
 - Pest and disease identification and treatment
 - Irrigation scheduling and water management
 - Government schemes: PM-KISAN, Soil Health Card, PMFBY (crop insurance)
+- Weather and climate conditions for farming
 - Market prices, mandi rates, selling strategies
 - Organic farming and modern agri-tech
  
@@ -46,7 +47,7 @@ def get_llm() -> ChatGoogleGenerativeAI:
     
     
     return ChatGoogleGenerativeAI(
-        model = "gemini-3.1-flash-lite",
+        model = "gemini-1.5-flash",
         google_api_key = settings.GEMINI_API_KEY,
         temperature = 0.7,
         max_tokens = 1024,
