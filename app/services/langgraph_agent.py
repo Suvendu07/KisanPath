@@ -283,6 +283,7 @@ def run_farming_agent(payload : AgentRequest) -> AgentResponse:
     if payload.context:
         user_message += f"\n[Additional context: {payload.context}]"
         
+    user_message += f"\n[IMPORTANT: You must respond entirely in {payload.language}.]"
         
     initial_state : AgentState = {
         "messages" : [HumanMessage(content=user_message)],

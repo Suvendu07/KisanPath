@@ -105,7 +105,8 @@ class AgentRequest(BaseModel):
     query : str
     location : Optional[str] = None
     context : Optional[str] = None
-    
+    language : str = "English"
+
     
 class AgentStep(BaseModel):
     step_name : str
