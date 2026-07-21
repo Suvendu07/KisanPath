@@ -133,12 +133,12 @@ class Diseaseinfo(BaseModel):
     
     
 class DiseaseDetectionResponse(BaseModel):
-    weed_name : str
-    confidence : float
-    is_weed : bool
-    description : str
-    control_method : str
-
+    success:        bool
+    top_prediction: Diseaseinfo
+    predictions:    List[Diseaseinfo]    # top-3
+    model_ready:    bool  
+    
+    
 
 class WeedInfo(BaseModel):
     weed_name : str
