@@ -84,3 +84,9 @@ tmp/
 secret.json
 credentials.json
 config.json
+
+
+requirements_backup.txt
+
+
+knowledge_base
