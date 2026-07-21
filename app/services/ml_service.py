@@ -23,7 +23,8 @@ from app.services.weather_service import get_weather_for_crop_recommendation
 
 
 
-BASE = Path(__file__).resolve().parent.parent.parent / "ml_models"
+# BASE = Path(__file__).resolve().parent.parent.parent / "ml_models"
+BASE = Path(__file__).resolve().parent.parent / "ml_models"
 DISEASE = BASE / "crop_disease"
 WEED = BASE / "weed_detection"
 PRICE = BASE / "crop_price"
@@ -32,7 +33,7 @@ CROP_REC = BASE / "crop_recommender"
 
 class ModelRegistry:
     
-    def __int__(self):
+    def __init__(self):
         self.disease_model = None
         self.disease_labels = None
         self.weed_model = None
@@ -47,10 +48,10 @@ class ModelRegistry:
         
         
     def load_all(self):
-        self.load_disease()
-        self.load_weed()
-        self.load_price()
-        self.load_crop_rec()
+        self._load_disease()
+        self._load_weed()
+        self._load_price()
+        self._load_crop_rec()
         
         print("ML model registry initialized.")
         
@@ -132,7 +133,7 @@ class ModelRegistry:
  
  
 registry = ModelRegistry()
-
+registry.load_all()
 
 
 
@@ -191,7 +192,7 @@ def predict_disease(file : UploadFile) -> DiseaseDetectionResponse:
         
         
         return DiseaseDetectionResponse(
-            success = False, top_preict = stub,
+            success = False, top_prediction = stub,
             predictions = [stub], model_ready = False,
         )
         
@@ -209,12 +210,12 @@ def predict_disease(file : UploadFile) -> DiseaseDetectionResponse:
         results.append(Diseaseinfo(
             disease_name=name.replace("_", " ").title(),
             confidence = round(float(preds[idx]) * 100, 2),
-            serverity=info["serverity"],
+            serverity=info["severity"],
             cause=info["cause"],
             symptoms=info["symptoms"],
             treatment=info["treatment"],
             prevention=info["prevention"],
-            is_healthy="healthy" in name.lowe(),
+            is_healthy="healthy" in name.lower(),
         ))
         
         

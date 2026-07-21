@@ -182,6 +182,18 @@ def ask_farming_docs(payload : RagRequest) -> RagResponse:
     )
  
  
+def save_knowledge_pdf(file) -> dict:
+    import shutil
+    
+    KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = KNOWLEDGE_DIR / file.filename
+    
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"message": f"Successfully uploaded {file.filename} to knowledge base."}
+ 
+ 
 def rebuild_vector_store() -> dict:
     """Called by admin endpoint when new PDFs are added to knowledge_base/."""
     store = build_vector_store()
