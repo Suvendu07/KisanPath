@@ -76,7 +76,7 @@ def get_weather(location : str, current_user : User = Depends(get_current_user),
 @router.post("/disease-detection", response_model=DiseaseDetectionResponse,)
 def detect_disease(file : UploadFile = File(...), current_user : User = Depends(get_current_user),):
     
-    return handle_service_error(ml_service.predict_disease, file)
+    return ml_service.predict_disease(file)
 
 
 
@@ -117,3 +117,15 @@ def recommend_fertilizer(payload : FertilizerRecommendRequest, current_user : Us
 def rebuild_knowledge_base(current_user : User = Depends(require_admin),):
     
     return handle_service_error(rag_service.rebuild_vector_store)
+
+
+    return handle_service_error(rag_service.rebuild_vector_store)
+
+
+@router.post("/upload-knowledge")
+def upload_knowledge_base_pdf(file : UploadFile = File(...), current_user : User = Depends(require_admin),):
+    
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+        
+    return handle_service_error(rag_service.save_knowledge_pdf, file)
