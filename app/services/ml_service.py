@@ -409,7 +409,7 @@ def recommend_crop(payload : CropRecommendRequest) -> CropRecommendResponse:
     
     
     X_scaled = registry.crop_rec_scaler.transform(x)
-    proba = registry.crop_rec_model.predict_prob(X_scaled)[0]
+    proba = registry.crop_rec_model.predict_proba(X_scaled)[0]
     top3_idx = proba.argsort()[-3:][::-1]
     
     top3 = [
