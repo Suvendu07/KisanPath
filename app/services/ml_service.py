@@ -23,8 +23,9 @@ from app.services.weather_service import get_weather_for_crop_recommendation
 
 
 
-# BASE = Path(__file__).resolve().parent.parent.parent / "ml_models"
+
 BASE = Path(__file__).resolve().parent.parent / "ml_models"
+
 DISEASE = BASE / "crop_disease"
 WEED = BASE / "weed_detection"
 PRICE = BASE / "crop_price"
@@ -59,11 +60,17 @@ class ModelRegistry:
     def _load_disease(self):
         try:
             import tensorflow as tf
+            
+            class CustomDense(tf.keras.layers.Dense):
+                def __init__(self, **kwargs):
+                    kwargs.pop("quantization_config", None)
+                    super().__init__(**kwargs)
+                    
             mp = DISEASE / "model.h5"
             lp = DISEASE / "class_labels.json"
             
             if mp.exists() and lp.exists():
-                self.disease_model = tf.keras.models.load_model(str(mp))
+                self.disease_model = tf.keras.models.load_model(str(mp), compile = False, custom_objects={'Dense': CustomDense})
                 self.disease_labels = json.load(open(lp))
                 
                 print("crop disease model loaded.")
@@ -79,10 +86,16 @@ class ModelRegistry:
     def _load_weed(self):
         try:
             import tensorflow as tf
+            
+            class CustomDense(tf.keras.layers.Dense):
+                def __init__(self, **kwargs):
+                    kwargs.pop("quantization_config", None)
+                    super().__init__(**kwargs)
+                    
             mp = WEED / "model.h5"
             lp = WEED / "class_labels.json"
             if mp.exists() and lp.exists():
-                self.weed_model = tf.keras.load_model(str(mp))
+                self.weed_model = tf.keras.models.load_model(str(mp), compile = False, custom_objects={'Dense': CustomDense})
                 self.weed_labels = json.load(open(lp))
                 print("weed detection model loaded.")
                 

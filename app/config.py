@@ -33,15 +33,25 @@ class Settings(BaseSettings):
     COHERE_API_KEY: str
     GROQ_API_KEY: str
     
-    RAZORPAY_KEY_ID : str
-    RAZORPAY_KEY_SECRET : str
+    # RAZORPAY_KEY_ID : str
+    # RAZORPAY_KEY_SECRET : str
     
-    WEATHER_API_KEY : str
+    RAZORPAY_KEY_ID : str = ""
+    RAZORPAY_KEY_SECRET : str = ""
     
-    CHAT_MEMORY_WINDOW : int
+    # WEATHER_API_KEY : str
     
-    KNOWLEDGE_BASE_DIR : str
-    VECTOR_STORE_DIR : str
+    WEATHER_API_KEY : str = ""
+    
+    
+    # CHAT_MEMORY_WINDOW : int
+    CHAT_MEMORY_WINDOW : int = 5
+    
+    # KNOWLEDGE_BASE_DIR : str
+    # VECTOR_STORE_DIR : str
+    
+    KNOWLEDGE_BASE_DIR : str = "knowledge_base"
+    VECTOR_STORE_DIR : str = "vector_store"
 
     class Config:
         env_file = ".env"
