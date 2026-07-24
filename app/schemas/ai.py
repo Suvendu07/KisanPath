@@ -211,7 +211,7 @@ class CropRecommendRequest(BaseModel):
     
 class CropRecommendResponse(BaseModel):
     recommended_crop : str
-    cofidence : float
+    confidence : float
     top_3_crops : List[dict]
     weather_used : WeatherCondition
     growing_tips : str
