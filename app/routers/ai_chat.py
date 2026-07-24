@@ -97,10 +97,10 @@ def predict_price(payload : PricePredictionRequest, current_user : User = Depend
 
 
 
-@router.post("/crop-recommend", response_model=CropRecommendRequest)
+@router.post("/crop-recommend", response_model=CropRecommendResponse)
 def recommend_crop(payload : CropRecommendRequest, current_user : User = Depends(get_current_user),):
     
-    return handle_service_error(ml_service.recommend_crop, payload)
+    return ml_service.recommend_crop(payload)
 
 
 
