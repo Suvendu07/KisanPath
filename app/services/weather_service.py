@@ -101,7 +101,7 @@ def get_current_weather(location : str) -> WeatherResponse:
             response.raise_for_status()
             data = response.json()
             
-    except httpx.TimeoutException():
+    except httpx.TimeoutException:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Weather API request timed out. Please try again."
@@ -131,7 +131,7 @@ def get_current_weather(location : str) -> WeatherResponse:
         temp_c = current["temp_c"],
         humidity = current["humidity"],
         rainfall_mm = current.get("precip_mm", 0.0),
-        wind_khp = current["wind_khp"],
+        wind_kph = current["wind_kph"],
         condition = current["condition"]["text"],
         icon = "https:" + current["condition"]["icon"],
         uv_index = current.get("uv", 0.0),
@@ -156,7 +156,7 @@ def get_current_weather(location : str) -> WeatherResponse:
             max_temp_c = d["maxtemp_c"],
             min_temp_c = d["mintemp_c"],
             avg_humidity = d["avghumidity"],
-            total_rain_mm = d.get("toatlprecip_mm", 0.0),
+            total_rain_mm = d.get("toatalprecip_mm", 0.0),
             condition = d["condition"]["text"],
             farming_tip = tip,
         ))
@@ -199,7 +199,7 @@ def get_weather_for_crop_recommendation(location : str) -> dict:
     except HTTPException:
         
         return {
-            "temerature" : 25.0,
+            "temperature" : 25.0,
             "humidity" : 65.0,
             "rainfall" : 100.0,
             "season" : detect_season(datetime.now().month),
