@@ -453,4 +453,5 @@ def recommend_fertilizer(payload : FertilizerRecommendRequest) -> FertilizerReco
         payload.phosphorus, payload.potassium, payload.soil_type,
     )
     
-    return FertilizerRecommendResponse(**result, note=result.get("note", ""))
+    # return FertilizerRecommendResponse(**result, note=result.get("note", ""))
+    return FertilizerRecommendResponse(**result)
