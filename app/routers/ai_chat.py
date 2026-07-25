@@ -105,10 +105,10 @@ def recommend_crop(payload : CropRecommendRequest, current_user : User = Depends
 
 
 
-@router.post("/fertilizer-recommend", response_model=FertilizerRecommendRequest,)
+@router.post("/fertilizer-recommend", response_model=FertilizerRecommendResponse,)
 def recommend_fertilizer(payload : FertilizerRecommendRequest, current_user : User = Depends(get_current_user),):
     
-    return handle_service_error(ml_service.recommend_fertilizer, payload)
+    return ml_service.recommend_fertilizer(payload)
 
 
 
