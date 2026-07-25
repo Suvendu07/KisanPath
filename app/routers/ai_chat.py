@@ -119,7 +119,7 @@ def rebuild_knowledge_base(current_user : User = Depends(require_admin),):
     return handle_service_error(rag_service.rebuild_vector_store)
 
 
-    return handle_service_error(rag_service.rebuild_vector_store)
+    # return handle_service_error(rag_service.rebuild_vector_store)
 
 
 @router.post("/upload-knowledge")
