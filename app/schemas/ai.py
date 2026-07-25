@@ -234,6 +234,6 @@ class FertilizerRecommendResponse(BaseModel):
     fertilizer_name : str
     description : str
     how_to_apply : str
-    quantity_per_acer : str
+    quantity_per_acre : str
     npk_suggestion : dict
     note : str
