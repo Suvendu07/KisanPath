@@ -140,46 +140,88 @@ def recommend_fertilizer_tool(crop_name : str,nitrogen : float, phosphorus : flo
     
     
     
+# @tool
+# def get_price_tool(crop_name : str, state : str) -> str:
+#     """Predict mandi price for a crop."""
+#     try:
+#         from app.services.ml_service import predict_price
+#         from datetime import datetime
+#         from app.schemas.ai import PricePredictionRequest
+        
+        
+#         now = datetime.now()
+#         payload = PricePredictionRequest(
+#             crop_name= crop_name,
+#             state= state,
+#             month=now.month,
+#             year = now.year,
+#         )
+        
+#         result = predict_price(payload)
+        
+        
+#         if not result.model_today:
+#             return(
+#                 f"Price prediction model is not loaded."
+#                 f"Check current rates at agmarknet.gov.in for {crop_name} in {state}."
+#             )
+            
+            
+#         return json.dumps({
+#             "crops" : result.crop_name,
+#             "state" : result.state,
+#             "predicted_price" : result.predicted_price,
+#             "price_range" : result.price_range,
+#             "trend" : result.trend,
+#             "note" : result.note,
+#         }
+#         )
+        
+        
+#     except Exception as e:
+#         return f"Price predication failed : {str(e)}"
+
+
+
 @tool
-def get_price_tool(crop_name : str, state : str) -> str:
+def get_price_tool(crop_name: str, state: str) -> str:
     """Predict mandi price for a crop."""
     try:
         from app.services.ml_service import predict_price
-        from datetime import datetime
         from app.schemas.ai import PricePredictionRequest
-        
-        
+        from datetime import datetime
+        import json
+
         now = datetime.now()
+
         payload = PricePredictionRequest(
-            crop_name= crop_name,
-            state= state,
+            crop_name=crop_name,
+            state=state,
             month=now.month,
-            year = now.year,
+            year=now.year,
         )
-        
+
         result = predict_price(payload)
-        
-        
-        if not result.model_today:
-            return(
-                f"Price prediction model is not loaded."
-                f"Check current rates at agmarknet.gov.in for {crop_name} in {state}."
-            )
-            
-            
-        return json.dumps({
-            "crops" : result.crop_name,
-            "state" : result.state,
-            "predicted_price" : result.predicted_price,
-            "price_range" : result.price_range,
-            "trend" : result.trend,
-            "note" : result.note,
-        }
+
+        # If the model isn't ready yet
+        if not result.model_ready:
+            return result.note
+
+        return json.dumps(
+            {
+                "crop_name": result.crop_name,
+                "state": result.state,
+                "prediction_price": result.prediction_price,
+                "price_range": result.price_range,
+                "confidence": result.confidence,
+                "trend": result.trend,
+                "note": result.note,
+            },
+            indent=2,
         )
-        
-        
+
     except Exception as e:
-        return f"Price predication failed : {str(e)}"
+        return f"Price prediction failed: {str(e)}"
 
 
 
@@ -273,6 +315,30 @@ def build_agent_graph():
 
 
 
+
+
+def extract_text(content):
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        texts = []
+
+        for item in content:
+            if isinstance(item, dict):
+                if item.get("type") == "text":
+                    texts.append(item.get("text", ""))
+                elif "text" in item:
+                    texts.append(str(item["text"]))
+            else:
+                texts.append(str(item))
+
+        return "\n".join(texts)
+
+    return str(content)
+
+
 def run_farming_agent(payload : AgentRequest) -> AgentResponse:
     
     user_message = payload.query
@@ -305,13 +371,29 @@ def run_farming_agent(payload : AgentRequest) -> AgentResponse:
         raise RuntimeError(f"Agent error: {str(e)}")
  
     # Extract final answer from last AI message
+    # final_answer = ""
+    # for msg in reversed(final_state["messages"]):
+    #     if isinstance(msg, AIMessage) and msg.content:
+    #         final_answer = msg.content
+    #         break
+    
+    
+    # Extract final answer from last AI message
     final_answer = ""
     for msg in reversed(final_state["messages"]):
-        if isinstance(msg, AIMessage) and msg.content:
-            final_answer = msg.content
-            break
+      if isinstance(msg, AIMessage) and msg.content:
+        final_answer = extract_text(msg.content)
+        break
  
-    steps = [AgentStep(**s) for s in final_state.get("steps", [])]
+    # steps = [AgentStep(**s) for s in final_state.get("steps", [])]
+    raw_steps = final_state.get("steps", [])
+
+    for step in raw_steps:
+       if "output" in step:
+        step["output"] = extract_text(step["output"])
+
+    steps = [AgentStep(**s) for s in raw_steps]
+ 
  
     return AgentResponse(
         final_answer = final_answer or "Agent could not produce a final answer. Please try rephrasing.",
