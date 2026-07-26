@@ -44,7 +44,7 @@ def handle_service_error(fn, *args, **kwargs):
 @router.post("/chat")
 def chat(payload : ChatRequest, current_user : User = Depends(get_current_user)):
     
-    return handle_service_error(langchain_service.chat_with_agri_ai, payload)
+    return langchain_service.chat_with_agri_ai(payload)
 
 
 
@@ -60,7 +60,7 @@ def ask_docs(payload : RagRequest, current_user : User = Depends(get_current_use
 @router.post("/agent")
 def farming_agent(payload : AgentRequest, current_user : User = Depends(get_current_user),):
     
-    return handle_service_error(langgraph_agent.run_farming_agent, payload)
+    return langgraph_agent.run_farming_agent(payload)
 
 
 
