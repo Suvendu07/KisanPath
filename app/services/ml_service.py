@@ -318,7 +318,8 @@ def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
             status_code=400, detail=f"Crop '{payload.crop_name}' not in training data."
         )
           
-    if payload.state not in le_state:
+    # if payload.state not in le_state:
+    if payload.state not in le_state.classes_:
         raise HTTPException(
             status_code=400, detail=f"state '{payload.state}' not in training data."
         )
