@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 
 
 
@@ -111,7 +111,7 @@ class AgentRequest(BaseModel):
 class AgentStep(BaseModel):
     step_name : str
     input : str
-    output : str
+    output : Any
     tool_used : Optional[str] = None
     
     
