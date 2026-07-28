@@ -116,7 +116,7 @@ def recommend_fertilizer(payload : FertilizerRecommendRequest, current_user : Us
 @router.post("/rebuild-knowledge")
 def rebuild_knowledge_base(current_user : User = Depends(require_admin),):
     
-    return handle_service_error(rag_service.rebuild_vector_store)
+    return rag_service.rebuild_vector_store
 
 
     # return handle_service_error(rag_service.rebuild_vector_store)
