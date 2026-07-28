@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
     EMAIL_HOST: str
     EMAIL_PORT: int
+    MAIL_FROM : str
+    MAIL_FROM_NAME : str
+    MAIL_TLS : bool
+    MAIL_SSL : bool
+    MAIL_ENABLED : bool
 
     GEMINI_API_KEY: str
     COHERE_API_KEY: str
