@@ -136,7 +136,7 @@ def initiate_payment(payload, payer, db : Session,) -> PaymentInitiateResponse:
  
  
 
-def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
+def verify_payment(payload, payer, db : Session, background_tasks = None) -> PaymentVerifyResponse:
     """
     Step 2 of payment flow.
     Called by frontend after Razorpay popup closes with success.
@@ -206,8 +206,71 @@ def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
             tracking_service.add_tracking_event(
                 db , OrderType.VENDOR, v_order.id, status=VendorOrderStatus.CONFIRMED.value
             )
- 
+            
+            
+            try:
+                from app.services import notification_service
+                listing = v_order.vendor_product
+                if listing and listing.vendor and listing.vendor.user:
+                    v_user = listing.vendor.user
+                    notification_service.notify_vendor_new_order(
+                        vendor_email     = v_user.email,
+                        vendor_name      = v_user.full_name,
+                        order_id         = v_order.id,
+                        tracking_id      = v_order.tracking_id or "",
+                        crop_name        = v_order.crop_name,
+                        quantity         = v_order.quantity,
+                        unit             = v_order.unit,
+                        price_per_unit   = v_order.price_per_unit,
+                        total_amount     = v_order.total_amount,
+                        buyer_type       = v_order.buyer_type,
+                        delivery_address = v_order.delivery_address,
+                        delivery_city    = v_order.delivery_city or "",
+                    )
+            except Exception:
+                pass
     db.commit()
+    
+    if background_tasks:
+        from app.services import notification_service
+        if payment.order_type == OrderType.PRODUCT and payment.product_order_id:
+            confirmed_order = db.query(Order).filter(
+                Order.id == payment.product_order_id
+            ).first()
+            if confirmed_order and confirmed_order.buyer:
+                est = (confirmed_order.estimated_delivery_date.strftime("%d %b %Y")
+                       if confirmed_order.estimated_delivery_date else "Within 5 days")
+                background_tasks.add_task(
+                    notification_service.notify_payment_confirmed,
+                    buyer_email         = confirmed_order.buyer.email,
+                    buyer_name          = confirmed_order.buyer.full_name,
+                    order_id            = confirmed_order.id,
+                    tracking_id         = confirmed_order.tracking_id or "",
+                    amount_paid         = payment.amount,
+                    razorpay_payment_id = payment.razorpay_payment_id,
+                    estimated_delivery  = est,
+                )
+ 
+        elif payment.order_type == OrderType.VENDOR and payment.vendor_order_id:
+            v_order = db.query(VendorOrder).filter(
+                VendorOrder.id == payment.vendor_order_id
+            ).first()
+            if v_order and v_order.buyer:
+                est = (v_order.estimated_delivery_date.strftime("%d %b %Y")
+                       if v_order.estimated_delivery_date else "Within 5 days")
+                background_tasks.add_task(
+                    notification_service.notify_payment_confirmed,
+                    buyer_email         = v_order.buyer.email,
+                    buyer_name          = v_order.buyer.full_name,
+                    order_id            = v_order.id,
+                    tracking_id         = v_order.tracking_id or "",
+                    amount_paid         = payment.amount,
+                    razorpay_payment_id = payment.razorpay_payment_id,
+                    estimated_delivery  = est,
+                )
+    
+    
+    
  
     return PaymentVerifyResponse(
         success = True,
@@ -433,7 +496,7 @@ def verify_payment(payload, payer, db : Session) -> PaymentVerifyResponse:
  
  
  
-def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
+def refund_payment(payload: RefundRequest, db: Session, background_tasks = None) -> RefundResponse:
 
     payment = (
         db.query(Payment)
@@ -555,6 +618,18 @@ def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
                 )
 
         db.commit()
+        if background_tasks and payment.payer:
+          from app.services import notification_service
+          background_tasks.add_task(
+            notification_service.notify_refund_issued,
+            buyer_email   = payment.payer.email,
+            buyer_name    = payment.payer.full_name,
+            order_id      = payment.product_order_id or payment.vendor_order_id or 0,
+            refund_id     = refund["id"],
+            refund_amount = refund_amount,
+            refund_reason = payload.reason or "Requested by admin",
+        )
+          
         db.refresh(payment)
 
         return RefundResponse(
@@ -584,7 +659,7 @@ def refund_payment(payload: RefundRequest, db: Session) -> RefundResponse:
  
 
 
-def cancel_order(order_type, order_id, user, db: Session,) -> dict:
+def cancel_order(order_type, order_id, user, db: Session, background_tasks = None,) -> dict:
     """
     User cancels an order BEFORE paying.
     Simply marks the order as CANCELLED and restores stock.
@@ -645,8 +720,36 @@ def cancel_order(order_type, order_id, user, db: Session,) -> dict:
             listing.is_available = True
  
         v_order.status = VendorOrderStatus.CANCELLED
- 
+        tracking_service.add_tracking_event(db, OrderType.VENDOR, v_order.id, status="cancelled")
+
+
     db.commit()
+    if background_tasks:
+        from app.services import notification_service
+        if order_type == OrderType.PRODUCT:
+            cancelled = db.query(Order).filter(Order.id == order_id).first()
+            if cancelled and cancelled.buyer:
+                background_tasks.add_task(
+                    notification_service.notify_order_cancelled,
+                    buyer_email       = cancelled.buyer.email,
+                    buyer_name        = cancelled.buyer.full_name,
+                    order_id          = cancelled.id,
+                    tracking_id       = cancelled.tracking_id or "",
+                    cancel_reason     = "Cancelled by user",
+                    refund_applicable = False,
+                )
+        elif order_type == OrderType.VENDOR:
+            v_cancelled = db.query(VendorOrder).filter(VendorOrder.id == order_id).first()
+            if v_cancelled and v_cancelled.buyer:
+                background_tasks.add_task(
+                    notification_service.notify_order_cancelled,
+                    buyer_email       = v_cancelled.buyer.email,
+                    buyer_name        = v_cancelled.buyer.full_name,
+                    order_id          = v_cancelled.id,
+                    tracking_id       = v_cancelled.tracking_id or "",
+                    cancel_reason     = "Cancelled by user",
+                    refund_applicable = False,
+                )
     return {"message": "Order cancelled successfully."}
  
  
