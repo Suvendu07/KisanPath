@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 
@@ -31,9 +31,9 @@ def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends
 
 
 @router.post("/cancel")
-def cancel_order(order_type : OrderType, order_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def cancel_order(order_type : OrderType, order_id : int, background_tasks: BackgroundTasks, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     
-    return payment_service.cancel_order(order_type, order_id, current_user, db)
+    return payment_service.cancel_order(order_type, order_id, current_user, db, background_tasks)
 
 
 
@@ -47,9 +47,9 @@ def payment_history(current_user : User = Depends(get_current_user), db : Sessio
 
 
 @router.post("/refund", response_model=RefundResponse)
-def refund_payment(payload : RefundRequest, current_user : User = Depends(require_admin), db : Session = Depends(get_db)):
+def refund_payment(payload : RefundRequest,background_tasks: BackgroundTasks, current_user : User = Depends(require_admin), db : Session = Depends(get_db)):
     
-    return payment_service.refund_payment(payload, db)
+    return payment_service.refund_payment(payload, db, background_tasks)
 
 
 
