@@ -22,8 +22,8 @@ router = APIRouter(prefix="/admin",
 
 @router.get("/dashboard", response_model=DashboardStats, summary="Platform overview stats")
 def admin_dashboard(
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.get_dashboard(db)
 
@@ -32,11 +32,11 @@ def admin_dashboard(
 
 @router.get("/users", summary="List all users")
 def list_users(
-    role:         str  = None,
-    is_active:    bool = None,
-    search:       str  = None,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    role: str  = None,
+    is_active: bool = None,
+    search: str  = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.list_users(db, role, is_active, search)
 
@@ -45,9 +45,9 @@ def list_users(
 
 @router.get("/users/{user_id}", summary="Get any user's detail")
 def get_user(
-    user_id:      int,
+    user_id: int,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return admin_service.get_user(user_id, db)
 
@@ -56,10 +56,10 @@ def get_user(
 
 @router.put("/users/{user_id}", summary="Update any user's details")
 def update_user(
-    user_id:      int,
-    payload:      AdminUserUpdate,
+    user_id: int,
+    payload: AdminUserUpdate,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return admin_service.update_user(user_id, payload, db)
 
@@ -68,9 +68,9 @@ def update_user(
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a user")
 def delete_user(
-    user_id:      int,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     admin_service.delete_user(user_id, current_user, db)
 
@@ -80,8 +80,8 @@ def delete_user(
 @router.get("/farmers", summary="List all farmer profiles")
 def list_farmers(
     is_approved:  bool = None,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.list_farmers(is_approved, db)
 
@@ -90,11 +90,11 @@ def list_farmers(
 
 @router.put("/farmers/{farmer_id}/approve", summary="Approve or reject a farmer")
 def approve_farmer(
-    farmer_id:    int,
-    payload:      ApprovalAction,
+    farmer_id: int,
+    payload: ApprovalAction,
     background_tasks: BackgroundTasks,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.approve_farmer(farmer_id, payload, db, background_tasks)
 
@@ -103,9 +103,9 @@ def approve_farmer(
 
 @router.get("/vendors", summary="List all vendor profiles")
 def list_vendors(
-    is_approved:  bool = None,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    is_approved: bool = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.list_vendors(is_approved, db)
 
@@ -114,11 +114,11 @@ def list_vendors(
 
 @router.put("/vendors/{vendor_id}/approve", summary="Approve or reject a vendor")
 def approve_vendor(
-    vendor_id:    int,
-    payload:      ApprovalAction,
+    vendor_id: int,
+    payload: ApprovalAction,
     background_tasks: BackgroundTasks,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.approve_vendor(vendor_id, payload, db, background_tasks)
 
@@ -127,9 +127,9 @@ def approve_vendor(
 
 @router.get("/orders", summary="List all orders on the platform")
 def list_all_orders(
-    order_status: str  = None,
-    current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    order_status: str = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     return admin_service.list_all_orders(order_status, db)
 
@@ -147,11 +147,11 @@ def list_all_vendor_order(order_status : str = None, current_user : User = Depen
 
 @router.put("/orders/{order_id}/status", summary="Update any order's status")
 def update_order_status(
-    order_id:     int,
-    payload:      OrderStatusUpdate,
+    order_id: int,
+    payload: OrderStatusUpdate,
     background_tasks: BackgroundTasks,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return admin_service.update_order_status(order_id, payload, db, background_tasks)
 
@@ -159,10 +159,10 @@ def update_order_status(
 
 @router.put("/vendor-orders/{order_id}/status", summary="Update any vendor order's status")
 def update_vendor_order_status(
-    order_id:     int,
-    payload:      AdminVendorOrderStatusUpdate,
+    order_id: int,
+    payload: AdminVendorOrderStatusUpdate,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return admin_service.update_vendor_order_status(order_id, payload, db)
 
@@ -172,7 +172,7 @@ def update_vendor_order_status(
 def list_all_products(
     is_available: bool = None,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return admin_service.list_all_products(is_available, db)
 
@@ -181,8 +181,8 @@ def list_all_products(
 
 @router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Remove any product")
 def delete_product(
-    product_id:   int,
+    product_id: int,
     current_user: User    = Depends(require_admin),
-    db:           Session = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     admin_service.delete_product(product_id, db)
