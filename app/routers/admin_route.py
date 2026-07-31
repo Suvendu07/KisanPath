@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -92,10 +92,11 @@ def list_farmers(
 def approve_farmer(
     farmer_id:    int,
     payload:      ApprovalAction,
+    background_tasks: BackgroundTasks,
     current_user: User    = Depends(require_admin),
     db:           Session = Depends(get_db),
 ):
-    return admin_service.approve_farmer(farmer_id, payload, db)
+    return admin_service.approve_farmer(farmer_id, payload, db, background_tasks)
 
 
 
@@ -115,10 +116,11 @@ def list_vendors(
 def approve_vendor(
     vendor_id:    int,
     payload:      ApprovalAction,
+    background_tasks: BackgroundTasks,
     current_user: User    = Depends(require_admin),
     db:           Session = Depends(get_db),
 ):
-    return admin_service.approve_vendor(vendor_id, payload, db)
+    return admin_service.approve_vendor(vendor_id, payload, db, background_tasks)
 
 
 
@@ -147,10 +149,11 @@ def list_all_vendor_order(order_status : str = None, current_user : User = Depen
 def update_order_status(
     order_id:     int,
     payload:      OrderStatusUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User    = Depends(require_admin),
     db:           Session = Depends(get_db),
 ):
-    return admin_service.update_order_status(order_id, payload, db)
+    return admin_service.update_order_status(order_id, payload, db, background_tasks)
 
 
 
