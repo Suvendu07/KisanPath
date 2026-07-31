@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, UploadFile
+from fastapi import HTTPException, status, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.models.user_model import User
 from app.models.farmer_product_model import Product
@@ -6,7 +6,7 @@ from app.models.feedback_model import Feedback
 from app.models.farmer_model import Farmer
 from app.models.order_model import Order, OrderItem, OrderStatus
 import uuid
-from app.services import tracking_service
+from app.services import tracking_service, notification_service
 from app.models.payment_model import OrderType
 from app.config import settings
 import os
@@ -204,7 +204,7 @@ def get_product_details(product_id : int, db : Session) -> dict:
     
 
 
-def place_order(payload, user , db : Session):
+def place_order(payload, user , db : Session,background_tasks: BackgroundTasks = None):
     
     total_amount = 0.0
     order_items = []
@@ -268,6 +268,40 @@ def place_order(payload, user , db : Session):
  
     db.commit()
     db.refresh(order)
+    
+    if background_tasks:
+        # Find first farmer for notification
+        first_item    = order.items[0] if order.items else None
+        farmer        = None
+        farmer_email  = None
+        farmer_name   = None
+        if first_item and first_item.product_id:
+            from app.models.farmer_product_model import Product as Prod
+            from app.models.farmer_model import Farmer as Farm
+            prod   = db.query(Prod).filter(Prod.id == first_item.product_id).first()
+            if prod:
+                farm = db.query(Farm).filter(Farm.id == prod.farmer_id).first()
+                if farm and farm.user:
+                    farmer_email = farm.user.email
+                    farmer_name  = farm.user.full_name
+ 
+        background_tasks.add_task(
+            notification_service.notify_order_placed,
+            buyer_email      = user.email,
+            buyer_name       = user.full_name,
+            order_id         = order.id,
+            tracking_id      = tracking_id,
+            total_amount     = order.total_amount,
+            delivery_charge  = order.delivery_charge,
+            final_amount     = order.final_amount,
+            delivery_address = order.delivery_address,
+            farmer_email     = farmer_email,
+            farmer_name      = farmer_name,
+            product_name     = first_item.product_name if first_item else None,
+            quantity         = first_item.quantity if first_item else None,
+            unit             = first_item.unit if first_item else None,
+            delivery_city    = order.delivery_city,
+        )
     return {
         "message":     "Order placed successfully.",
         "order_id":    order.id,
