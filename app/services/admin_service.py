@@ -135,22 +135,33 @@ def list_farmers(is_approved: bool, db: Session) -> list:
 
 
 
-def approve_farmer(farmer_id: int, payload: ApprovalAction, db: Session) -> dict:
+def approve_farmer(farmer_id: int, payload: ApprovalAction, db: Session, background_tasks=None) -> dict:
     farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
     if not farmer:
         raise HTTPException(status_code=404, detail="Farmer not found.")
 
     farmer.is_approved = payload.approve
     db.commit()
+    
+    
 
     action = "approved" if payload.approve else "rejected"
+    
+    if payload.approve and background_tasks and farmer.user:
+        from app.services import notification_service
+        background_tasks.add_task(
+            notification_service.notify_account_approved,
+            user_email = farmer.user.email,
+            user_name  = farmer.user.full_name,
+            role       = "Farmer",
+        )
     return {"message": f"Farmer account {action} successfully."}
 
 
 
 
 
-def list_vendors(is_approved: bool, db: Session) -> list:
+def list_vendors(is_approved: bool, db: Session,) -> list:
     query = db.query(Vendor)
     if is_approved is not None:
         query = query.filter(Vendor.is_approved == is_approved)
@@ -174,7 +185,7 @@ def list_vendors(is_approved: bool, db: Session) -> list:
 
 
 
-def approve_vendor(vendor_id: int, payload: ApprovalAction, db: Session) -> dict:
+def approve_vendor(vendor_id: int, payload: ApprovalAction, db: Session, background_tasks=None) -> dict:
     vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found.")
@@ -183,6 +194,16 @@ def approve_vendor(vendor_id: int, payload: ApprovalAction, db: Session) -> dict
     db.commit()
 
     action = "approved" if payload.approve else "rejected"
+    
+    if payload.approve and background_tasks and vendor.user:
+        from app.services import notification_service
+        background_tasks.add_task(
+            notification_service.notify_account_approved,
+            user_email = vendor.user.email,
+            user_name  = vendor.user.full_name,
+            role       = "Vendor",
+        )
+        
     return {"message": f"Vendor account {action} successfully."}
 
 
@@ -246,7 +267,7 @@ ALLOWED_TRANSITIONS = {
 
 
 
-def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) -> dict:
+def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session, background_tasks  = None,) -> dict:
     order = db.query(Order).filter(Order.id == order_id).first()
     
     if not order:
@@ -282,6 +303,22 @@ def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session) 
     
 
     db.commit()
+    
+    if background_tasks and order.buyer:
+        from app.services import notification_service
+        est = (order.estimated_delivery_date.strftime("%d %b %Y")
+               if order.estimated_delivery_date else None)
+        background_tasks.add_task(
+            notification_service.notify_order_status_update,
+            buyer_email        = order.buyer.email,
+            buyer_name         = order.buyer.full_name,
+            order_id           = order.id,
+            tracking_id        = order.tracking_id or "",
+            new_status         = payload.status.value if hasattr(payload.status, "value") else payload.status,
+            estimated_delivery = est,
+        )
+        
+        
     return {"message": f"Order {order_id} status updated to '{payload.status}'."}
 
 
