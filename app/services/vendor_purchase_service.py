@@ -135,7 +135,7 @@ def get_vendor_listing_details(listing_id , db : Session):
 
 
 def place_vendor_purchase(
-        payload, buyer , buyer_type, db
+        payload, buyer , buyer_type, db : Session, background_tasks  = None,
 ):
  
  
@@ -204,6 +204,24 @@ def place_vendor_purchase(
     db.add(order)
     db.commit()
     db.refresh(order)
+    
+    if background_tasks and listing.vendor and listing.vendor.user:
+        from app.services import notification_service
+        background_tasks.add_task(
+            notification_service.notify_vendor_order_placed,
+            vendor_email     = listing.vendor.user.email,
+            vendor_name      = listing.vendor.user.full_name,
+            buyer_email      = buyer.email,
+            buyer_name       = buyer.full_name,
+            order_id         = order.id,
+            tracking_id      = tracking_id,
+            crop_name        = listing.crop_name,
+            quantity         = payload.quantity,
+            unit             = str(listing.unit),
+            total_amount     = total_amount,
+            buyer_type       = buyer_type.value,
+            delivery_address = payload.delivery_address,
+        )
  
     # Step 6 — Return confirmation
     return {
