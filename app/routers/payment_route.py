@@ -24,9 +24,11 @@ def initiate_payment(payload : PaymentInitiateRequest, current_user : User = Dep
 
 
 @router.post("/verify", response_model= PaymentVerifyResponse)
-def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+# def verify_payment(payload : PaymentVerifyRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def verify_payment(payload : PaymentVerifyRequest, background_tasks: BackgroundTasks, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     
-    return payment_service.verify_payment(payload, current_user, db)
+    # return payment_service.verify_payment(payload, current_user, db)
+    return payment_service.verify_payment(payload, current_user, db, background_tasks)
 
 
 
