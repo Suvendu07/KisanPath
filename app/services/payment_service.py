@@ -238,8 +238,8 @@ def verify_payment(payload, payer, db : Session, background_tasks = None) -> Pay
                 Order.id == payment.product_order_id
             ).first()
             if confirmed_order and confirmed_order.buyer:
-                est = (confirmed_order.estimated_delivery_date.strftime("%d %b %Y")
-                       if confirmed_order.estimated_delivery_date else "Within 5 days")
+                est = (confirmed_order.estimate_delivery_date.strftime("%d %b %Y")
+                       if confirmed_order.estimate_delivery_date else "Within 5 days")
                 background_tasks.add_task(
                     notification_service.notify_payment_confirmed,
                     buyer_email         = confirmed_order.buyer.email,

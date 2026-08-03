@@ -10,6 +10,9 @@ from app.routers.user_route import router as user_router
 from app.routers.payment_route import router as payment_router
 from app.routers.ai_chat import router as ai_router
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 Base.metadata.create_all(bind=engine)
@@ -32,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=str(BASE_DIR / "uploads")), name="uploads")
 
 @app.get("/home")
 def home_page():

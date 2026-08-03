@@ -20,7 +20,7 @@ APP_URL = "http:localhost:5173"
 def get_mail_config() -> ConnectionConfig:
     
     return ConnectionConfig(
-        MAIL_USERNAME= settings.EMAIL_USER,
+        MAIL_USERNAME= settings.MAIL_USER,
         MAIL_PASSWORD= settings.EMAIL_PASSWORD,
         MAIL_FROM= settings.MAIL_FROM,
         MAIL_FROM_NAME= settings.MAIL_FROM_NAME,
@@ -34,12 +34,11 @@ def get_mail_config() -> ConnectionConfig:
     
     
     
-    
 def render_template(template_name : str, data : dict) -> str:
     
     tmpl_path  = TMPL_DIR / template_name
     if not tmpl_path.exists():
-        raise FileNotFoundError(f"Email template not found: {template_name}")
+        raise FileNotFoundError(f"Email template not found: {template_name}. Looked in: {tmpl_path.absolute()}")
     
     
     content = tmpl_path.read_text(encoding = "utf-8")
@@ -52,7 +51,7 @@ def render_template(template_name : str, data : dict) -> str:
     for key, value in data.items():
         full_html = full_html.replace(f"{{{{{key}}}}}", str(value) if value is not None else "")
         
-        return full_html
+    return full_html
     
     
     
@@ -83,7 +82,7 @@ async def send_mail(
         return True
     
     
-    if not settings.EMAIL_USER or not settings.EMAIL_PASSWORD:
+    if not settings.MAIL_USER or not settings.EMAIL_PASSWORD:
         logger.warning("Mail credentials missing - skipping send.")
         return False
     
