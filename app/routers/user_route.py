@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
 from app.schemas.user import UserProfileUpdate, OrderCreate, OrderResponse, FeedbackCreate
 from app.models.user_model import User
 from sqlalchemy.orm import Session
@@ -66,9 +66,11 @@ def product_details(product_id : int, current_user : User = Depends(require_user
 
 
 @router.post("/place/order")
-def order(payload : OrderCreate, user : User = Depends(require_user), db : Session = Depends(get_db)):
+# def order(payload : OrderCreate, user : User = Depends(require_user), db : Session = Depends(get_db)):
+def order(payload : OrderCreate, background_tasks: BackgroundTasks, user : User = Depends(require_user), db : Session = Depends(get_db)):
     
-    return place_order(payload, user, db)
+    # return place_order(payload, user, db)
+    return place_order(payload, user, db, background_tasks)
 
 
 
@@ -124,9 +126,12 @@ def get_listing(listing_id : int,current_user : User = Depends(require_user),db 
 
 
 @router.post("/vendor-purchase")
-def user_buy_from_vendor(payload : VendorPurchaseRequest,current_user : User = Depends(require_user), buyer_type = BuyerType.USER, db : Session = Depends(get_db)):
+# def user_buy_from_vendor(payload : VendorPurchaseRequest,current_user : User = Depends(require_user), buyer_type = BuyerType.USER, db : Session = Depends(get_db)):
+def user_buy_from_vendor(payload : VendorPurchaseRequest, background_tasks: BackgroundTasks, current_user : User = Depends(require_user), buyer_type = BuyerType.USER, db : Session = Depends(get_db)):
     
-    return place_vendor_purchase(payload, current_user, buyer_type, db)
+    # return place_vendor_purchase(payload, current_user, buyer_type, db)
+    return place_vendor_purchase(payload, current_user, buyer_type, db, background_tasks)
+
 
 
 
