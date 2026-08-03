@@ -10,7 +10,7 @@ from app.config import settings
 
 
 logger = logging.getLogger(__name__)
-TMPL_DIR = Path(__file__).resolve.parent.parent / "templates" / "emails"
+TMPL_DIR = Path(__file__).resolve().parent.parent / "templates" / "emails"
 BASE_TMPL = TMPL_DIR / "base.html"
 APP_URL = "http:localhost:5173"
 
@@ -31,6 +31,7 @@ def get_mail_config() -> ConnectionConfig:
         USE_CREDENTIALS=True,
         VALIDATE_CERTS=True,
     )
+    
     
     
     

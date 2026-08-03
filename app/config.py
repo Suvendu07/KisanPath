@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str
     MAX_FILE_SIZE_MB: int
 
-    EMAIL_USER: str
+    MAIL_USER: str
     EMAIL_PASSWORD: str
     EMAIL_HOST: str
     EMAIL_PORT: int
