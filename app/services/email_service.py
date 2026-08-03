@@ -8,7 +8,7 @@ def send_email(recipient_email: str, subject: str, body: str):
     msg = MIMEText(body)
 
     msg["Subject"] = subject
-    msg["From"] = settings.EMAIL_USER
+    msg["From"] = settings.MAIL_USER
     msg["To"] = recipient_email
 
     with smtplib.SMTP(
@@ -19,7 +19,7 @@ def send_email(recipient_email: str, subject: str, body: str):
         server.starttls()
 
         server.login(
-            settings.EMAIL_USER,
+            settings.MAIL_USER,
             settings.EMAIL_PASSWORD
         )
 

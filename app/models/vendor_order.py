@@ -18,13 +18,13 @@ from app.database import Base
 
 
 class VendorOrderStatus(str, enum.Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    PROCESSING = "processing"
-    SHIPPED = "shipped"
-    OUT_FOR_DELIVERY  = "out_for_delivery"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    PROCESSING = "PROCESSING"
+    SHIPPED = "SHIPPED"
+    OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
 
 
 class BuyerType(str, enum.Enum):
