@@ -209,6 +209,7 @@ async def notify_order_status_update(
     cfg = STATUS_CONFIG.get(new_status, (
         new_status.replace("_", " ").title(), "📋", "badge-blue", ""
     ))
+    est_html = f"<p>Estimated Delivery: {estimated_delivery}</p>" if estimated_delivery and new_status.lower() != "delivered" else ""
     await send_mail(buyer_email, f"Order Update — {cfg[0]}", "order_status_update.html", {
         "buyer_name": buyer_name,
         "order_id": order_id,
@@ -219,7 +220,7 @@ async def notify_order_status_update(
         "status_label": new_status.replace("_", " ").upper(),
         "status_message": cfg[3],
         "updated_at": _now(),
-        "estimated_delivery": estimated_delivery or "",
+        "estimated_delivery_html": est_html,
     })
     
     
