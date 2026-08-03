@@ -306,8 +306,8 @@ def update_order_status(order_id: int, payload: OrderStatusUpdate, db: Session, 
     
     if background_tasks and order.buyer:
         from app.services import notification_service
-        est = (order.estimated_delivery_date.strftime("%d %b %Y")
-               if order.estimated_delivery_date else None)
+        est = (order.estimate_delivery_date.strftime("%d %b %Y")
+               if order.estimate_delivery_date else None)
         background_tasks.add_task(
             notification_service.notify_order_status_update,
             buyer_email        = order.buyer.email,
