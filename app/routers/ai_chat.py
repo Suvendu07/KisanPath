@@ -89,7 +89,7 @@ def detect_weed(file : UploadFile = File(...), current_user : User = Depends(get
 
 
 
-@router.post("/price-prediction", response_model=PricePredictionRequest,)
+@router.post("/price-prediction", response_model=PricePredictionResponse,)
 def predict_price(payload : PricePredictionRequest, current_user : User = Depends(get_current_user)):
     
     return handle_service_error(ml_service.predict_price, payload)
@@ -128,4 +128,4 @@ def upload_knowledge_base_pdf(file : UploadFile = File(...), current_user : User
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
         
-    return handle_service_error(rag_service.save_knowledge_pdf, file)
+    return rag_service.save_knowledge_pdf(file)
