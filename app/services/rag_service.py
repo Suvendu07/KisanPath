@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+# from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -28,28 +30,38 @@ Please consult your local agriculture officer (KVK)."
  
 Always be practical and clear. Use bullet points for steps.
  
-Documents: {summaries}
+Documents: {context}
  
-Question: {question}
+Question: {input}
 Answer:"""
  
  
  
 RAG_PROMPT = PromptTemplate(
     template=RAG_PROMPT_TEMPLATE,
-    input_variables=["summaries", "question"],
+    input_variables=["context", "input"],
 )
 
 
+# def get_embedding():
+#     if not settings.GEMINI_API_KEY:
+#         raise ValueError("GEMINI_API_KEY not configured.")
+    
+#     return GoogleGenerativeAIEmbeddings(
+#         model="models/gemini-embedding-001",
+#         google_api_key = settings.GEMINI_API_KEY,
+#     )
+    
 def get_embedding():
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY not configured.")
-    
-    return GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-001",
-        google_api_key = settings.GEMINI_API_KEY,
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        model_kwargs={
+            "device": "cpu"
+        },
+        encode_kwargs={
+            "normalize_embeddings": True
+        },
     )
-    
     
 def build_vector_store() -> FAISS:
     
@@ -111,87 +123,240 @@ def load_vector_store() -> FAISS:
     
 
 
-def ask_farming_docs(payload : RagRequest) -> RagResponse:
+# def ask_farming_docs(payload : RagRequest) -> RagResponse:
     
-    if not settings.GEMINI_API_KEY:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="GEMINI_API_KEY not configured.")
+#     if not settings.GEMINI_API_KEY:
+#         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="GEMINI_API_KEY not configured.")
     
-    try:
-        vector_store = load_vector_store()
+#     try:
+#         vector_store = load_vector_store()
         
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Failed to load knowledge base: {str(e)}"
-                            )
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                             detail=f"Failed to load knowledge base: {str(e)}"
+#                             )
         
         
-    llm = ChatGoogleGenerativeAI(
-        model = "gemini-2.5-flash",
-        google_api_key = settings.GEMINI_API_KEY,
-        temperature = 0.3,
-    )
+#     llm = ChatGoogleGenerativeAI(
+#         model = "gemini-2.5-flash",
+#         google_api_key = settings.GEMINI_API_KEY,
+#         temperature = 0.3,
+#     )
     
     
-    retriever = vector_store.as_retriever(
-        search_type = "similarity",
-        search_kwargs = {"k" : payload.top_k},
-    )
+#     retriever = vector_store.as_retriever(
+#         search_type = "similarity",
+#         search_kwargs = {"k" : payload.top_k},
+#     )
     
     
-    document_chain = create_stuff_documents_chain(
-        llm = llm,
-        prompt=RAG_PROMPT,
-    )
+#     document_chain = create_stuff_documents_chain(
+#         llm = llm,
+#         prompt=RAG_PROMPT,
+#     )
     
-    chain = create_retrieval_chain(
-        retriever = retriever,
-        combine_docs_chain = document_chain,
-    )
+#     chain = create_retrieval_chain(
+#         retriever = retriever,
+#         combine_docs_chain = document_chain,
+#     )
     
     
-    try:
-        result = chain({"question" : payload.question})
+#     # try:
+#     #     result = chain({"question" : payload.question})
     
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"RAG chain error : {str(e)}")
+#     # except Exception as e:
+#     #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#     #                         detail=f"RAG chain error : {str(e)}")
+    
+#     try:
+#       result = chain.invoke({
+#         "question": payload.question
+#     })
+
+#     except Exception as e:
+#        raise HTTPException(
+#         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         detail=f"RAG chain error : {str(e)}"
+#     )
         
     
-    sources = []
-    seen = set()
+#     sources = []
+#     seen = set()
     
-    for doc in result.get("source_documents", []):
-        meta = doc.metadata
-        src_key = f"{meta.get('source', 'unknown')}:{meta.get('page',0)}"
+#     # for doc in result.get("source_documents", []):
+#     #     meta = doc.metadata
+#     #     src_key = f"{meta.get('source', 'unknown')}:{meta.get('page',0)}"
         
-        if src_key not in seen:
-            seen.add(src_key)
-            sources.append(RagSource(
-                source=os.path.basename(meta.get("source", "unknown")),
-                page = meta.get("page", 0) + 1,
-                excerpt=doc.page_content[:200] + "...",
-            ))
+#     #     if src_key not in seen:
+#     #         seen.add(src_key)
+#     #         sources.append(RagSource(
+#     #             source=os.path.basename(meta.get("source", "unknown")),
+#     #             page = meta.get("page", 0) + 1,
+#     #             excerpt=doc.page_content[:200] + "...",
+#     #         ))
+    
+#     sources = []
+#     seen = set()
+
+#     for doc in result.get("context", []):
+#       meta = doc.metadata
+
+#       src_key = f"{meta.get('source', 'unknown')}:{meta.get('page', 0)}"
+
+#       if src_key not in seen:
+#         seen.add(src_key)
+
+#         sources.append(
+#             RagSource(
+#                 source=os.path.basename(
+#                     meta.get("source", "unknown")
+#                 ),
+#                 page=meta.get("page", 0) + 1,
+#                 excerpt=doc.page_content[:200] + "...",
+#             )
+#         )
             
     
-    return RagResponse(
-        answer   = result.get("answer", result.get("result", "No answer found.")),
-        sources  = sources,
-        question = payload.question,
+#     return RagResponse(
+#         answer   = result.get("answer", result.get("result", "No answer found.")),
+#         sources  = sources,
+#         question = payload.question,
+#     )
+ 
+def ask_farming_docs(payload: RagRequest) -> RagResponse:
+
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="GEMINI_API_KEY not configured."
+        )
+
+    # Load vector store
+    try:
+        vector_store = load_vector_store()
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load knowledge base: {str(e)}"
+        )
+
+    # LLM
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        google_api_key=settings.GEMINI_API_KEY,
+        temperature=0.3,
     )
+
+    # Retriever
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={
+            "k": payload.top_k
+        },
+    )
+
+    # Document chain
+    document_chain = create_stuff_documents_chain(
+        llm=llm,
+        prompt=RAG_PROMPT,
+    )
+
+    # Retrieval chain
+    chain = create_retrieval_chain(
+        retriever=retriever,
+        combine_docs_chain=document_chain,
+    )
+
+    # Run chain
+    try:
+        result = chain.invoke({
+            "input": payload.question
+        })
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"RAG chain error: {str(e)}"
+        )
+
+    # Extract sources
+    sources = []
+    seen = set()
+
+    for doc in result.get("context", []):
+
+        meta = doc.metadata
+
+        src_key = (
+            f"{meta.get('source', 'unknown')}:"
+            f"{meta.get('page', 0)}"
+        )
+
+        if src_key not in seen:
+
+            seen.add(src_key)
+
+            sources.append(
+                RagSource(
+                    source=os.path.basename(
+                        meta.get("source", "unknown")
+                    ),
+                    page=meta.get("page", 0) + 1,
+                    excerpt=doc.page_content[:200] + "...",
+                )
+            )
+
+    # Return response
+    return RagResponse(
+        answer=result.get(
+            "answer",
+            "No answer found."
+        ),
+        sources=sources,
+        question=payload.question,
+    )
+ 
+# def save_knowledge_pdf(file) -> dict:
+#     import shutil
+    
+#     KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+#     file_path = KNOWLEDGE_DIR / file.filename
+    
+#     with file_path.open("wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+        
+#     return {"message": f"Successfully uploaded {file.filename} to knowledge base."}
+ 
+ 
  
  
 def save_knowledge_pdf(file) -> dict:
     import shutil
-    
+
     KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+
     file_path = KNOWLEDGE_DIR / file.filename
-    
+
     with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-        
-    return {"message": f"Successfully uploaded {file.filename} to knowledge base."}
+
+    # Rebuild FAISS index so the new PDF becomes searchable
+    build_vector_store()
+
+    return {
+        "message": (
+            f"Successfully uploaded {file.filename} "
+            "and added it to the knowledge base."
+        )
+    }
+ 
+ 
  
  
 def rebuild_vector_store() -> dict:
