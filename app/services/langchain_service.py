@@ -31,6 +31,7 @@ Rules:
 - For disease/pest issues always end with: Immediate action + Preventive measure
 - For unrelated questions say: "Main sirf kheti-baadi ke baare mein madad kar sakta hoon!"
 - Always end farming advice with one short "Pro Tip 🌱:"
+- The current date is {current_date}. Keep this in mind when discussing weather forecasts or seasons.
  
 Current conversation:
 {history}
@@ -56,11 +57,11 @@ def get_llm() -> ChatGoogleGenerativeAI:
     
 
 def build_chain(history : list[ChatMessage], language : str) -> ConversationChain:
-    
+    from datetime import datetime
     llm = get_llm()
     
     
-    formatted_template = AGRI_SYSTEM_PROMPT.replace("{language}", language)
+    formatted_template = AGRI_SYSTEM_PROMPT.replace("{language}", language).replace("{current_date}", datetime.now().strftime("%d %B %Y"))
     
     
     prompt = PromptTemplate(
