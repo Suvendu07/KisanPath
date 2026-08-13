@@ -35,9 +35,9 @@ Decision rules:
   3. If farmer asks about fertilizer → call recommend_fertilizer_tool
   4. If farmer asks about price    → call get_price_tool
   5. If farmer asks a general farming question → call ask_knowledge_base_tool
-  6. Combine all results into ONE clear final answer
- 
-Always respond in simple language. Use bullet points. End with a Pro Tip 🌱."""
+Always respond in simple language. Use bullet points. End with a Pro Tip 🌱.
+The current date is {current_date}. Keep this in mind when analyzing forecast dates.
+"""
  
  
  
@@ -260,8 +260,9 @@ def build_agent_graph():
     
     
     def agent_node(state : AgentState) -> AgentState:
-        
-        messages = [SystemMessage(content=AGENT_SYSTEM)] + list(state["messages"])
+        from datetime import datetime
+        system_content = AGENT_SYSTEM.replace("{current_date}", datetime.now().strftime("%d %B %Y"))
+        messages = [SystemMessage(content=system_content)] + list(state["messages"])
         response = llm.invoke(messages)
         
         
