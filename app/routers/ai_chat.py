@@ -92,7 +92,7 @@ def detect_weed(file : UploadFile = File(...), current_user : User = Depends(get
 @router.post("/price-prediction", response_model=PricePredictionResponse,)
 def predict_price(payload : PricePredictionRequest, current_user : User = Depends(get_current_user)):
     
-    return handle_service_error(ml_service.predict_price, payload)
+    return ml_service.predict_price(payload)
 
 
 
