@@ -9,7 +9,7 @@ from fastapi import HTTPException, UploadFile, status
 from PIL import Image
 import io
 import joblib
-
+import pandas as pd
 
 from app.schemas.ai import (
     DiseaseDetectionResponse, Diseaseinfo,
@@ -323,58 +323,172 @@ def predict_weed(file : UploadFile) -> WeedDetectionResponse:
     
 
 
-def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
+# def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
     
+#     if registry.price_model is None:
+#         return PricePredictionResponse(
+#             crop_name=payload.crop_name, state=payload.state,
+#             month=payload.month, year = payload.year,
+#             prediction_price=0.0, price_range={"min" : 0, "max" : 0},
+#             confidence = "N/A", trend="N/A",
+#             note="Price prediction model not loaded yet. Training in progress.",
+#             model_ready=False,
+#         )
+        
+        
+#     le_crop = registry.price_encoders["crop"]
+#     le_state = registry.price_encoders["state"]
+    
+    
+#     if payload.crop_name not in le_crop.classes_:
+#         raise HTTPException(
+#             status_code=400, detail=f"Crop '{payload.crop_name}' not in training data."
+#         )
+          
+#     # if payload.state not in le_state:
+#     if payload.state not in le_state.classes_:
+#         raise HTTPException(
+#             status_code=400, detail=f"state '{payload.state}' not in training data."
+#         )
+        
+    
+#     X = np.array([[
+#         le_crop.transform([payload.crop_name])[0],
+#         le_state.transform([payload.state])[0],
+#         payload.month, payload.year,
+#     ]])
+    
+#     predicted = round(float(registry.price_model.predict(X)[0]), 2)
+#     margin = predicted * 0.10
+#     trend = ("Rising"  if payload.month in [10,11,12,1] else
+#              "Falling" if payload.month in [4,5,6] else "Stable")
+    
+    
+#     return PricePredictionResponse(
+#         crop_name=payload.crop_name, state=payload.state,
+#         month = payload.month, year = payload.year,
+#         prediction_price=predicted,
+#         price_range={"min" : round(predicted - margin, 2), "max" : round(predicted + margin, 2)},
+#         confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
+#         trend=trend,
+#         note=f"Predicted model price for {payload.crop_name} in {payload.state} : {predicted}/quintal.",
+#         model_ready=True
+#     )    
+    
+    
+def predict_price(
+    payload: PricePredictionRequest
+) -> PricePredictionResponse:
+
     if registry.price_model is None:
         return PricePredictionResponse(
-            crop_name=payload.crop_name, state=payload.state,
-            month=payload.month, year = payload.year,
-            prediction_price=0.0, price_range={"min" : 0, "max" : 0},
-            confidence = "N/A", trend="N/A",
-            note="Price prediction model not loaded yet. Training in progress.",
+            crop_name=payload.crop_name,
+            state=payload.state,
+            month=payload.month,
+            year=payload.year,
+            prediction_price=0.0,
+            price_range={"min": 0, "max": 0},
+            confidence="N/A",
+            trend="N/A",
+            note="Price prediction model not loaded yet.",
             model_ready=False,
         )
-        
-        
+
+    # Get encoders
     le_crop = registry.price_encoders["crop"]
     le_state = registry.price_encoders["state"]
-    
-    
+
+    # Validate crop
     if payload.crop_name not in le_crop.classes_:
         raise HTTPException(
-            status_code=400, detail=f"Crop '{payload.crop_name}' not in training data."
+            status_code=400,
+            detail=f"Crop '{payload.crop_name}' not in training data."
         )
-          
-    # if payload.state not in le_state:
+
+    # Validate state
     if payload.state not in le_state.classes_:
         raise HTTPException(
-            status_code=400, detail=f"state '{payload.state}' not in training data."
+            status_code=400,
+            detail=f"State '{payload.state}' not in training data."
         )
-        
-    
-    X = np.array([[
-        le_crop.transform([payload.crop_name])[0],
-        le_state.transform([payload.state])[0],
-        payload.month, payload.year,
-    ]])
-    
-    predicted = round(float(registry.price_model.predict(X)[0]), 2)
+
+    # Encode categorical values
+    crop_encoded = le_crop.transform(
+        [payload.crop_name]
+    )[0]
+
+    state_encoded = le_state.transform(
+        [payload.state]
+    )[0]
+
+    # Create input with EXACT training feature order
+    X = pd.DataFrame(
+        [[
+            crop_encoded,
+            state_encoded,
+            payload.month,
+            payload.year
+        ]],
+        columns=[
+            "crop_encoded",
+            "state_encoded",
+            "month",
+            "year"
+        ]
+    )
+
+    # Predict
+    predicted = float(
+        registry.price_model.predict(X)[0]
+    )
+
+    predicted = max(0.0, predicted)
+
+    predicted = round(predicted, 2)
+
+    # Price range ±10%
     margin = predicted * 0.10
-    trend = ("Rising"  if payload.month in [10,11,12,1] else
-             "Falling" if payload.month in [4,5,6] else "Stable")
-    
-    
+
+    price_min = max(
+        0.0,
+        predicted - margin
+    )
+
+    price_max = predicted + margin
+
+    # Simple trend
+    if payload.month in [10, 11, 12, 1]:
+        trend = "Rising"
+
+    elif payload.month in [4, 5, 6]:
+        trend = "Falling"
+
+    else:
+        trend = "Stable"
+
+    # Model confidence
+    confidence = "Medium"
+
     return PricePredictionResponse(
-        crop_name=payload.crop_name, state=payload.state,
-        month = payload.month, year = payload.year,
+        crop_name=payload.crop_name,
+        state=payload.state,
+        month=payload.month,
+        year=payload.year,
         prediction_price=predicted,
-        price_range={"min" : round(predicted - margin, 2), "max" : round(predicted + margin, 2)},
-        confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
+        price_range={
+            "min": round(price_min, 2),
+            "max": round(price_max, 2)
+        },
+        confidence=confidence,
         trend=trend,
-        note=f"Predicted model price for {payload.crop_name} in {payload.state} : {predicted}/quintal.",
+        note=(
+            f"Predicted model price for "
+            f"{payload.crop_name} in "
+            f"{payload.state}: "
+            f"₹{predicted}/quintal."
+        ),
         model_ready=True
-    )    
-    
+    )
     
     
     
