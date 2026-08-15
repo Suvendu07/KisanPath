@@ -401,7 +401,7 @@ def predict_price(
     # Validate crop
     if payload.crop_name not in le_crop.classes_:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Crop '{payload.crop_name}' not in training data."
         )
 
