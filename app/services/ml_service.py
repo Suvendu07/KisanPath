@@ -8,6 +8,7 @@ from typing import Optional
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image
 import io
+import joblib
 
 
 from app.schemas.ai import (
@@ -107,23 +108,49 @@ class ModelRegistry:
             print(f"Weed model error : {e}")
             
             
-    def _load_price(self):
-        try:
-            mp = PRICE / "crop_price_prediction_model.pkl"
-            ep = PRICE / "label_encoders.pkl"
-            fp = PRICE / "feature_columns.pkl"
+    # def _load_price(self):
+    #     try:
+    #         mp = PRICE / "crop_price_prediction_model.pkl"
+    #         ep = PRICE / "label_encoders.pkl"
+    #         fp = PRICE / "feature_columns.pkl"
             
-            if mp.exists():
-                self.price_model = pickle.load(open(mp, "rb"))
-                self.price_encoders = pickle.load(open(ep, "rb"))
-                self.price_features = pickle.load(open(fp, "rb"))
-                print("crop price model loaded.")
+    #         if mp.exists():
+    #             self.price_model = pickle.load(open(mp, "rb"))
+    #             self.price_encoders = pickle.load(open(ep, "rb"))
+    #             self.price_features = pickle.load(open(fp, "rb"))
+    #             print("crop price model loaded.")
                 
-            else:
-                print("crop price model not found yet.")
+    #         else:
+    #             print("crop price model not found yet.")
                 
-        except Exception as e:
-            print(f" Price model error : {e}")
+    #     except Exception as e:
+    #         print(f" Price model error : {e}")
+    def _load_price(self):
+      try:
+        mp = PRICE / "crop_price_prediction_model.pkl"
+        ep = PRICE / "label_encoders.pkl"
+        fp = PRICE / "feature_columns.pkl"
+
+        if not mp.exists():
+            print("Crop price model not found yet.")
+            return
+
+        if not ep.exists():
+            print("Price label encoders not found.")
+            return
+
+        if not fp.exists():
+            print("Price feature columns not found.")
+            return
+
+        self.price_model = joblib.load(mp)
+        self.price_encoders = joblib.load(ep)
+        self.price_features = joblib.load(fp)
+
+        print("Crop price model loaded successfully.")
+
+      except Exception as e:
+        print(f"Price model error: {e}")
             
             
     
@@ -343,7 +370,8 @@ def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
         month = payload.month, year = payload.year,
         prediction_price=predicted,
         price_range={"min" : round(predicted - margin, 2), "max" : round(predicted + margin, 2)},
-        confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
+        # confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
+        confidence="Medium",
         trend=trend,
         note=f"Predicted model price for {payload.crop_name} in {payload.state} : {predicted}/quintal.",
         model_ready=True
