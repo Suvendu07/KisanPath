@@ -8,8 +8,7 @@ from typing import Optional
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image
 import io
-import joblib
-import pandas as pd
+
 
 from app.schemas.ai import (
     DiseaseDetectionResponse, Diseaseinfo,
@@ -108,49 +107,23 @@ class ModelRegistry:
             print(f"Weed model error : {e}")
             
             
-    # def _load_price(self):
-    #     try:
-    #         mp = PRICE / "crop_price_prediction_model.pkl"
-    #         ep = PRICE / "label_encoders.pkl"
-    #         fp = PRICE / "feature_columns.pkl"
-            
-    #         if mp.exists():
-    #             self.price_model = pickle.load(open(mp, "rb"))
-    #             self.price_encoders = pickle.load(open(ep, "rb"))
-    #             self.price_features = pickle.load(open(fp, "rb"))         
-    #             print("crop price model loaded.")
-                
-    #         else:
-    #             print("crop price model not found yet.")
-                
-    #     except Exception as e:
-    #         print(f" Price model error : {e}")
     def _load_price(self):
-      try:
-        mp = PRICE / "crop_price_prediction_model.pkl"
-        ep = PRICE / "label_encoders.pkl"
-        fp = PRICE / "feature_columns.pkl"
-
-        if not mp.exists():
-            print("Crop price model not found yet.")
-            return
-
-        if not ep.exists():
-            print("Price label encoders not found.")
-            return
-
-        if not fp.exists():
-            print("Price feature columns not found.")
-            return
-
-        self.price_model = joblib.load(mp)
-        self.price_encoders = joblib.load(ep)
-        self.price_features = joblib.load(fp)
-
-        print("Crop price model loaded successfully.")
-
-      except Exception as e:
-        print(f"Price model error: {e}")
+        try:
+            mp = PRICE / "crop_price_prediction_model.pkl"
+            ep = PRICE / "label_encoders.pkl"
+            fp = PRICE / "feature_columns.pkl"
+            
+            if mp.exists():
+                self.price_model = pickle.load(open(mp, "rb"))
+                self.price_encoders = pickle.load(open(ep, "rb"))
+                self.price_features = pickle.load(open(fp, "rb"))
+                print("crop price model loaded.")
+                
+            else:
+                print("crop price model not found yet.")
+                
+        except Exception as e:
+            print(f" Price model error : {e}")
             
             
     
@@ -323,172 +296,59 @@ def predict_weed(file : UploadFile) -> WeedDetectionResponse:
     
 
 
-# def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
+def predict_price(payload : PricePredictionRequest) -> PricePredictionResponse:
     
-#     if registry.price_model is None:
-#         return PricePredictionResponse(
-#             crop_name=payload.crop_name, state=payload.state,
-#             month=payload.month, year = payload.year,
-#             prediction_price=0.0, price_range={"min" : 0, "max" : 0},
-#             confidence = "N/A", trend="N/A",
-#             note="Price prediction model not loaded yet. Training in progress.",
-#             model_ready=False,
-#         )
-        
-        
-#     le_crop = registry.price_encoders["crop"]
-#     le_state = registry.price_encoders["state"]
-    
-    
-#     if payload.crop_name not in le_crop.classes_:
-#         raise HTTPException(
-#             status_code=400, detail=f"Crop '{payload.crop_name}' not in training data."
-#         )
-          
-#     # if payload.state not in le_state:
-#     if payload.state not in le_state.classes_:
-#         raise HTTPException(
-#             status_code=400, detail=f"state '{payload.state}' not in training data."
-#         )
-        
-    
-#     X = np.array([[
-#         le_crop.transform([payload.crop_name])[0],
-#         le_state.transform([payload.state])[0],
-#         payload.month, payload.year,
-#     ]])
-    
-#     predicted = round(float(registry.price_model.predict(X)[0]), 2)
-#     margin = predicted * 0.10
-#     trend = ("Rising"  if payload.month in [10,11,12,1] else
-#              "Falling" if payload.month in [4,5,6] else "Stable")
-    
-    
-#     return PricePredictionResponse(
-#         crop_name=payload.crop_name, state=payload.state,
-#         month = payload.month, year = payload.year,
-#         prediction_price=predicted,
-#         price_range={"min" : round(predicted - margin, 2), "max" : round(predicted + margin, 2)},
-#         confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
-#         trend=trend,
-#         note=f"Predicted model price for {payload.crop_name} in {payload.state} : {predicted}/quintal.",
-#         model_ready=True
-#     )    
-    
-    
-def predict_price(
-    payload: PricePredictionRequest
-) -> PricePredictionResponse:
-
     if registry.price_model is None:
         return PricePredictionResponse(
-            crop_name=payload.crop_name,
-            state=payload.state,
-            month=payload.month,
-            year=payload.year,
-            prediction_price=0.0,
-            price_range={"min": 0, "max": 0},
-            confidence="N/A",
-            trend="N/A",
-            note="Price prediction model not loaded yet.",
+            crop_name=payload.crop_name, state=payload.state,
+            month=payload.month, year = payload.year,
+            prediction_price=0.0, price_range={"min" : 0, "max" : 0},
+            confidence = "N/A", trend="N/A",
+            note="Price prediction model not loaded yet. Training in progress.",
             model_ready=False,
         )
-
-    # Get encoders
+        
+        
     le_crop = registry.price_encoders["crop"]
     le_state = registry.price_encoders["state"]
-
-    # Validate crop
-    if payload.crop_name not in le_crop.classes_:
+    
+    
+    crop_match = next((c for c in le_crop.classes_ if c.lower() == payload.crop_name.lower()), None)
+    if not crop_match:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Crop '{payload.crop_name}' not in training data."
+            status_code=400, detail=f"Crop '{payload.crop_name}' not in training data."
         )
-
-    # Validate state
-    if payload.state not in le_state.classes_:
+          
+    state_match = next((s for s in le_state.classes_ if s.lower() == payload.state.lower()), None)
+    if not state_match:
         raise HTTPException(
-            status_code=400,
-            detail=f"State '{payload.state}' not in training data."
+            status_code=400, detail=f"state '{payload.state}' not in training data."
         )
-
-    # Encode categorical values
-    crop_encoded = le_crop.transform(
-        [payload.crop_name]
-    )[0]
-
-    state_encoded = le_state.transform(
-        [payload.state]
-    )[0]
-
-    # Create input with EXACT training feature order
-    X = pd.DataFrame(
-        [[
-            crop_encoded,
-            state_encoded,
-            payload.month,
-            payload.year
-        ]],
-        columns=[
-            "crop_encoded",
-            "state_encoded",
-            "month",
-            "year"
-        ]
-    )
-
-    # Predict
-    predicted = float(
-        registry.price_model.predict(X)[0]
-    )
-
-    predicted = max(0.0, predicted)
-
-    predicted = round(predicted, 2)
-
-    # Price range ±10%
+        
+    
+    X = np.array([[
+        le_crop.transform([crop_match])[0],
+        le_state.transform([state_match])[0],
+        payload.month, payload.year,
+    ]])
+    
+    predicted = round(float(registry.price_model.predict(X)[0]), 2)
     margin = predicted * 0.10
-
-    price_min = max(
-        0.0,
-        predicted - margin
-    )
-
-    price_max = predicted + margin
-
-    # Simple trend
-    if payload.month in [10, 11, 12, 1]:
-        trend = "Rising"
-
-    elif payload.month in [4, 5, 6]:
-        trend = "Falling"
-
-    else:
-        trend = "Stable"
-
-    # Model confidence
-    confidence = "Medium"
-
+    trend = ("Rising"  if payload.month in [10,11,12,1] else
+             "Falling" if payload.month in [4,5,6] else "Stable")
+    
+    
     return PricePredictionResponse(
-        crop_name=payload.crop_name,
-        state=payload.state,
-        month=payload.month,
-        year=payload.year,
+        crop_name=payload.crop_name, state=payload.state,
+        month = payload.month, year = payload.year,
         prediction_price=predicted,
-        price_range={
-            "min": round(price_min, 2),
-            "max": round(price_max, 2)
-        },
-        confidence=confidence,
+        price_range={"min" : round(predicted - margin, 2), "max" : round(predicted + margin, 2)},
+        confidence="high" if registry.price_features.get("r2", 0) > 0.8 else "Medium",
         trend=trend,
-        note=(
-            f"Predicted model price for "
-            f"{payload.crop_name} in "
-            f"{payload.state}: "
-            f"₹{predicted}/quintal."
-        ),
+        note=f"Predicted model price for {payload.crop_name} in {payload.state} : {predicted}/quintal.",
         model_ready=True
-    )
+    )    
+    
     
     
     
