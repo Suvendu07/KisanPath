@@ -273,7 +273,7 @@ WEED_DB = {
         "control_method": "No action needed.",
     },
     "default": {
-        "description":    "Invasive weed competing with crops for nutrients.",
+        "descriptions":    "Invasive weed competing with crops for nutrients.",
         "control_method": "Apply selective herbicide or manual removal at early stage.",
     },
 }
