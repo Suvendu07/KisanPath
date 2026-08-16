@@ -40,7 +40,7 @@ def get_strict_llm() -> ChatGoogleGenerativeAI:
     )
     
 
-def get_embeddings() -> GoogleGenerativeAIEmbeddings():
+def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     
     _check_key()
     return GoogleGenerativeAIEmbeddings(
