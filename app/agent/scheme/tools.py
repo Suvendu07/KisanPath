@@ -69,3 +69,50 @@ def get_farmer_profile_from_db(user_id : int, db : Session) -> dict:
         
         
         
+        
+def faiss_retrieve_schemes(enriched_query : str, top_k : int = 6,) -> tuple[list, list]:
+    
+    """
+    Retrieves relevant document chunks from FAISS vector store.
+    Returns (chunks_text_list, sources_list).
+ 
+    Uses the existing rag_service.load_vector_store() —
+    no duplication of FAISS initialization.
+    """
+    
+    try:
+        from app.services.rag_service import load_vector_store
+        
+        vector_store = load_vector_store()
+        retriever = vector_store.as_retriever(
+            search_type = "similarity",
+            search_kwargs = {"k" : top_k},
+        )
+        
+        docs = retriever.invoke(enriched_query)
+        chunks = [doc.page_content for doc in docs]
+        sources = []
+        seen = set()
+        
+        
+        for doc in docs:
+            meta = doc.metadata
+            src_key = f"{meta.get('source', 'unknown')} : {meta.get('page',0)}"
+            
+            if src_key not in seen:
+                seen.add(src_key)
+                
+                import os
+
+                sources.append({
+                    "source" : os.path.basename(meta.get("source" , "unknown")),
+                    "page" : meta.get("page", 0) + 1,
+                    "excerpt" : doc.page_content[:200],
+                })
+                
+                
+        return chunks, sources
+    
+    except Exception as e:
+        logger.error(f"faiss_retrieve_schemes failed : {e}")
+        return [], []
