@@ -39,6 +39,15 @@ def get_strict_llm() -> ChatGoogleGenerativeAI:
         max_tokens = 2048,
     )
     
+def get_creative_llm() -> ChatGoogleGenerativeAI:
+   
+    _check_key()
+    return ChatGoogleGenerativeAI(
+        model = GEMINI_MODEL,
+        google_api_key = settings.GEMINI_API_KEY,
+        temperature = 0.4,
+        max_tokens = 2048,
+    )
 
 def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     
