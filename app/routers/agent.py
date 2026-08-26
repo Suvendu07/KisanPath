@@ -13,7 +13,7 @@ from app.agent.scheme.service import (
     clear_session,
 )
  
-router = APIRouter()
+router = APIRouter(prefix="/api/agents", tags=["AI Agents"])
  
  
  
