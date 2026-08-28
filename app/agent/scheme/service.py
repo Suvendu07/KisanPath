@@ -38,7 +38,7 @@ def _get_or_build_graph(db : Session):
 
 
 
-def run_scheme_agent(user_id : int, user_role : str, mesasge : str, session_id : Optional[str], db : Session) -> dict:
+def run_scheme_agent(user_id : int, user_role : str, messasge : str, session_id : Optional[str], db : Session) -> dict:
     
     """
     Runs the Government Scheme Agent for one user message.
@@ -72,7 +72,7 @@ def run_scheme_agent(user_id : int, user_role : str, mesasge : str, session_id :
             user_id= user_id,
             user_role= user_role, 
             session_id= session_id,
-            current_query= mesasge,
+            current_query= messasge,
         )
         
         compiled_graph = _get_or_build_graph(db)
