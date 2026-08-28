@@ -22,7 +22,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 
 @asynccontextmanager
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     """Create tables on startup (dev only). In production, use Alembic migrations."""
  
     # Import all models here so Base knows about them before create_all
-    from app.models import user, farmer, vendor, product, order, feedback, mandi_price  # noqa
+    from app.models import farmer_product_model, user_model, farmer_model, vendor_model, order_model, feedback_model, mandi_model, vendor_order, vendor_product_model, payment_model, order_tracking, agent_session
     Base.metadata.create_all(bind=engine)
  
     # Create required directories
@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
  
     print(f"{settings.APP_NAME} v{settings.APP_VERSION} started")
     yield
-    print("🛑 Application shutting down...")
+    print("Application shutting down...")
 
 app = FastAPI(
     title=settings.APP_NAME,
