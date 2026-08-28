@@ -14,7 +14,7 @@ class AgentSession(Base):
     
     session_id = Column(String(100), unique=True, nullable=False, index=True)
     agent_name = Column(String(50), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), ondelete="SET NULL")
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable= True)
     
     history = Column(JSON, default=dict)
     

@@ -1,8 +1,8 @@
-"""create table
+"""initial schema
 
-Revision ID: ca5df1f3bb53
+Revision ID: 8ac8b1d24701
 Revises: 
-Create Date: 2026-05-29 10:16:33.937937
+Create Date: 2026-08-28 07:24:37.585696
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ca5df1f3bb53'
+revision: str = '8ac8b1d24701'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -72,9 +72,10 @@ def upgrade() -> None:
     sa.Column('total_amount', sa.Float(), nullable=False),
     sa.Column('delivery_charge', sa.Float(), nullable=True),
     sa.Column('final_amount', sa.Float(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='orderstatus'), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', name='orderstatus'), nullable=True),
     sa.Column('tracking_id', sa.String(length=100), nullable=True),
     sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('estimate_delivery_date', sa.Date(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('delivered_at', sa.DateTime(), nullable=True),
@@ -156,6 +157,7 @@ def upgrade() -> None:
     sa.Column('stock_quantity', sa.Float(), nullable=False),
     sa.Column('min_order_quantity', sa.Float(), nullable=False),
     sa.Column('available_at', sa.String(length=200), nullable=True),
+    sa.Column('is_available', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id'], ondelete='CASCADE'),
@@ -197,7 +199,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_order_items_id'), 'order_items', ['id'], unique=False)
     op.create_table('vendor_orders',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('vendor_id', sa.Integer(), nullable=False),
+    sa.Column('vendor_product_id', sa.Integer(), nullable=True),
     sa.Column('crop_name', sa.String(length=150), nullable=False),
     sa.Column('price_per_unit', sa.Float(), nullable=False),
     sa.Column('unit', sa.String(length=20), nullable=False),
@@ -208,23 +210,70 @@ def upgrade() -> None:
     sa.Column('delivery_address', sa.Text(), nullable=False),
     sa.Column('delivery_city', sa.String(length=150), nullable=False),
     sa.Column('delivery_pincode', sa.String(length=10), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='vendororderstatus'), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', name='vendororderstatus'), nullable=True),
     sa.Column('tracking_id', sa.String(length=100), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('estimated_delivery_date', sa.Date(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('delivered_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['buyer_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['vendor_id'], ['vendor_products.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['vendor_product_id'], ['vendor_products.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('tracking_id')
     )
     op.create_index(op.f('ix_vendor_orders_id'), 'vendor_orders', ['id'], unique=False)
+    op.create_table('order_tracking',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('order_type', sa.Enum('PRODUCT', 'VENDOR', name='ordertype'), nullable=False),
+    sa.Column('product_order_id', sa.Integer(), nullable=True),
+    sa.Column('vendor_order_id', sa.Integer(), nullable=True),
+    sa.Column('status', sa.String(length=50), nullable=False),
+    sa.Column('title', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('location', sa.String(length=200), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['product_order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['vendor_order_id'], ['vendor_orders.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_order_tracking_id'), 'order_tracking', ['id'], unique=False)
+    op.create_table('payments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('payer_id', sa.Integer(), nullable=True),
+    sa.Column('order_type', sa.Enum('PRODUCT', 'VENDOR', name='ordertype'), nullable=False),
+    sa.Column('product_order_id', sa.Integer(), nullable=True),
+    sa.Column('vendor_order_id', sa.Integer(), nullable=True),
+    sa.Column('razorpay_order_id', sa.String(length=100), nullable=False),
+    sa.Column('razorpay_payment_id', sa.String(length=100), nullable=True),
+    sa.Column('razorpay_signature', sa.String(length=255), nullable=True),
+    sa.Column('amount', sa.Float(), nullable=False),
+    sa.Column('currency', sa.String(length=10), nullable=True),
+    sa.Column('status', sa.Enum('CREATED', 'PENDING', 'PAID', 'FAILED', 'REFUND', name='paymentstatus'), nullable=True),
+    sa.Column('refund_id', sa.String(length=100), nullable=True),
+    sa.Column('refund_amount', sa.Float(), nullable=True),
+    sa.Column('refund_reason', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('paid_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['payer_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['product_order_id'], ['orders.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['vendor_order_id'], ['vendor_orders.id'], ondelete='SET NULL'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('razorpay_payment_id')
+    )
+    op.create_index(op.f('ix_payments_id'), 'payments', ['id'], unique=False)
+    op.create_index(op.f('ix_payments_razorpay_order_id'), 'payments', ['razorpay_order_id'], unique=True)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_payments_razorpay_order_id'), table_name='payments')
+    op.drop_index(op.f('ix_payments_id'), table_name='payments')
+    op.drop_table('payments')
+    op.drop_index(op.f('ix_order_tracking_id'), table_name='order_tracking')
+    op.drop_table('order_tracking')
     op.drop_index(op.f('ix_vendor_orders_id'), table_name='vendor_orders')
     op.drop_table('vendor_orders')
     op.drop_index(op.f('ix_order_items_id'), table_name='order_items')
