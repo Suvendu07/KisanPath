@@ -28,11 +28,11 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
     EMAIL_HOST: str
     EMAIL_PORT: int
-    MAIL_FROM : str
-    MAIL_FROM_NAME : str
-    MAIL_TLS : bool
-    MAIL_SSL : bool
-    MAIL_ENABLED : bool
+    MAIL_FROM : str = ""
+    MAIL_FROM_NAME : str = ""
+    MAIL_TLS : bool = False
+    MAIL_SSL : bool = False
+    MAIL_ENABLED : bool = False
 
     GEMINI_API_KEY: str
     COHERE_API_KEY: str
@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"
 
     @property
     def origins_list(self):

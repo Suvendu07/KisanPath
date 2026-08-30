@@ -23,7 +23,7 @@ class GovernmentSchemeAgentState(TypedDict):
     farmer_category : Optional[str]
     annual_income : Optional[str]
     has_bank_account : Optional[bool]
-    has_aadhhar : Optional[bool]
+    has_aadhaar : Optional[bool]
     kisan_id : Optional[str]
     
     intent : Optional[str]
@@ -116,7 +116,7 @@ def create_initial_state(
         retry_count = 0,
         # Output
         final_response = None,
-        follow_up_questions  = [],
+        follow_up_questions   = [],
         disclaimer = (
             "⚠️ Scheme details and eligibility criteria may have changed. "
             "Always verify with your nearest Krishi Vigyan Kendra (KVK) "
@@ -127,7 +127,7 @@ def create_initial_state(
         error = None,
         error_node = None,
         is_complete = False,
-        needs_clarification  = False,
+        needs_clarification   = False,
         steps_taken = [],
     )
  
