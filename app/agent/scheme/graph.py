@@ -168,7 +168,7 @@ def build_scheme_agent_graph(db : Session):
     graph.add_conditional_edges("intent_classifier", route_after_intent,
                                 {
                                     "farmer_profile_extractor" : "farmer_profile_extractor",
-                                    "scheme_retriever" : "scheme_retruver",
+                                    "scheme_retriever" : "scheme_retriever",
                                     "out_of_scope_handler" : "out_of_scope_handler",
                                     "error_handler" : "error_handler",
                                 })
@@ -177,7 +177,7 @@ def build_scheme_agent_graph(db : Session):
         "missing_info_detector",
         route_after_missing_info,
         {
-            "scheme_retriver" : "scheme_retriever",
+            "scheme_retriever" : "scheme_retriever",
             "clarification_end" : "clarification_end",
             "error_handler" : "error_handler",
         }
@@ -187,7 +187,7 @@ def build_scheme_agent_graph(db : Session):
         "scheme_retriever",
         lambda state : "error_handler" if (state.get("error") and not state.get("final_response")) else "eligibility_analyzer",
         {
-            "eligibilty_analyzer" : "eligibility_analyzer",
+            "eligibility_analyzer" : "eligibility_analyzer",
             "error_handler" : "error_handler",
         }
     )
@@ -209,7 +209,7 @@ def build_scheme_agent_graph(db : Session):
         }
     )
     
-    graph.add_edge("mark_retry", "scheme_retriver_retry")
+    graph.add_edge("mark_retry", "scheme_retriever_retry")
     
     graph.add_edge("scheme_retriever_retry", "eligibility_analyzer")
     
