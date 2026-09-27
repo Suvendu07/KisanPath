@@ -118,15 +118,17 @@ Output (JSON only):"""
 
 
 
-def build_retrieval_query(intent : str, farmer_state : Optional[str], crop_types : Optional[list],farmer_category : Optional[str], specific_schema : Optional[str], specific_topic : Optional[str],) -> str:
+# def build_retrieval_query(intent : str, farmer_state : Optional[str], crop_types : Optional[list],farmer_category : Optional[str], specific_schema : Optional[str], specific_topic : Optional[str],) -> str:
+
+def build_retrieval_query(intent : str, farmer_state : Optional[str], crop_types : Optional[list],farmer_category : Optional[str], specific_scheme : Optional[str], specific_topic : Optional[str],) -> str:
     
     """Builds an enriched semantic query for FAISS retrieval.
     Much better results than passing the raw user message."""
     
     parts = ["Indian goverment agriculture schemas"]
     
-    if specific_schema:
-        parts.append(specific_schema)
+    if specific_scheme:
+        parts.append(specific_scheme)
         
     if specific_topic:
         parts.append(f"{specific_topic} subsidy support")
