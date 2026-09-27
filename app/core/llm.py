@@ -3,8 +3,10 @@ from app.config import settings
 
 
 
-GEMINI_MODEL = "gemini-1.5-flash"
-EMBEDDING_MODEL = "models/embedding-001"
+# GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
+# EMBEDDING_MODEL = "models/embedding-001"
+EMBEDDING_MODEL = "gemini-embedding-001"
 
 
 
@@ -30,23 +32,24 @@ def get_llm(temperature : float = 0.7, max_tokens : int = 1024) -> ChatGoogleGen
     
     
 def get_strict_llm() -> ChatGoogleGenerativeAI:
-    
     _check_key()
+
     return ChatGoogleGenerativeAI(
-        model = GEMINI_MODEL,
-        google_api_key = settings.GEMINI_API_KEY,
-        temperature = 0.4,
-        max_tokens = 2048,
+        model=GEMINI_MODEL,
+        google_api_key=settings.GEMINI_API_KEY,
+        temperature=0.2,
+        max_tokens=2048,
     )
     
+    
 def get_creative_llm() -> ChatGoogleGenerativeAI:
-   
     _check_key()
+
     return ChatGoogleGenerativeAI(
-        model = GEMINI_MODEL,
-        google_api_key = settings.GEMINI_API_KEY,
-        temperature = 0.4,
-        max_tokens = 2048,
+        model=GEMINI_MODEL,
+        google_api_key=settings.GEMINI_API_KEY,
+        temperature=0.7,
+        max_tokens=2048,
     )
 
 def get_embeddings() -> GoogleGenerativeAIEmbeddings:
