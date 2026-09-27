@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Optional
 from sqlalchemy.orm import Session
+from langchain_core.messages import HumanMessage
 
 
 
@@ -164,38 +165,159 @@ def get_state_scheme_context(farmer_state : Optional[str], db : Session) -> str:
     
     
 
-def call_gemini_for_json(prompt : str, llm) -> Optional[dict]:
+# def call_gemini_for_json(prompt : str, llm) -> Optional[dict]:
     
-    """
-    Calls Gemini LLM and parses the response as JSON.
-    Returns None on any failure — callers handle None gracefully.
+#     """
+#     Calls Gemini LLM and parses the response as JSON.
+#     Returns None on any failure — callers handle None gracefully.
  
-    Used by: intent_classifier, farmer_profile_extractor,
-             missing_info_detector, eligibility_analyzer, response_verifier
-    """
+#     Used by: intent_classifier, farmer_profile_extractor,
+#              missing_info_detector, eligibility_analyzer, response_verifier
+#     """
     
-    try:
-        from langchain_core.messages import HumanMessage
+#     try:
+#         from langchain_core.messages import HumanMessage
         
-        response = llm.invoke([HumanMessage(content=prompt)])
-        text = response.content.trip()
+#         response = llm.invoke([HumanMessage(content=prompt)])
+#         # text = response.content.trip()
         
-        if text.startswith("'''"):
-            lines = text.split("\n")
-            text = "\n".join(
-                line for line in lines
-                if not line.strip().startswith("'''")
-            )
+#         # if text.startswith("'''"):
+#         #     lines = text.split("\n")
+#         #     text = "\n".join(
+#         #         line for line in lines
+#         #         if not line.strip().startswith("'''")
+#         #     )
+        
+#         if isinstance(response.content, list):
+#             text = "".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in response.content)
+#         else:
+#             text = str(response.content)
             
-        return json.loads(text)
+#         text = text.strip()
+        
+#         if text.startswith("```"):
+#             lines = text.split("\n")
+#             text = "\n".join(
+#                 line for line in lines
+#                 # if not line.strip().startswith("'''")
+#                 if not line.strip().startswith("```")
+#             )
+            
+#         return json.loads(text)
     
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON parse failed : {e}. Raw response: {text[:200]}")
-        return None
+#     except json.JSONDecodeError as e:
+#         logger.error(f"JSON parse failed : {e}. Raw response: {text[:200]}")
+#         return None
+#     except Exception as e:
+#         logger.error(f"call_gemini_for_json failed: {e}")
+#         return None
+    
+    
+    
+    
+
+def call_gemini_for_json(
+    prompt: str,
+    llm
+) -> Optional[dict]:
+
+    """
+    Calls Gemini and parses the response as JSON.
+
+    Returns:
+        dict  -> successful JSON response
+        None  -> response could not be parsed
+
+    Raises:
+        Exception -> Gemini/API errors such as quota exhaustion
+    """
+
+    try:
+
+        
+        response = llm.invoke(
+            [HumanMessage(content=prompt)]
+        )
+
+        
+        content = response.content
+
+        if isinstance(content, list):
+
+            text_parts = []
+
+            for item in content:
+
+                if isinstance(item, dict):
+                    text_parts.append(
+                        item.get("text", "")
+                    )
+
+                else:
+                    text_parts.append(
+                        str(item)
+                    )
+
+            text = "".join(text_parts)
+
+        else:
+            text = str(content)
+
+        text = text.strip()
+
+       
+        if text.startswith("```"):
+
+            lines = text.splitlines()
+
+            # Remove first line: ```json
+            if lines:
+                lines = lines[1:]
+
+            # Remove last ```
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+
+            text = "\n".join(lines).strip()
+
+        
+        try:
+
+            result = json.loads(text)
+
+            if not isinstance(result, dict):
+
+                logger.error(
+                    "Gemini returned JSON but it is not an object: %s",
+                    type(result).__name__
+                )
+
+                return None
+
+            return result
+
+        except json.JSONDecodeError as e:
+
+            logger.error(
+                "JSON parse failed: %s. Raw response: %s",
+                e,
+                text[:500]
+            )
+
+            return None
+
     except Exception as e:
-        logger.error(f"call_gemini_for_json failed: {e}")
-        return None
-    
+
+        # IMPORTANT:
+        # Don't hide Gemini API errors such as
+        # 429 RESOURCE_EXHAUSTED.
+
+        logger.exception(
+            "call_gemini_for_json failed: %s",
+            e
+        )
+
+        raise
     
 def call_gemini_for_text(prompt: str, llm) -> Optional[str]:
     """
@@ -206,7 +328,13 @@ def call_gemini_for_text(prompt: str, llm) -> Optional[str]:
         from langchain_core.messages import HumanMessage
  
         response = llm.invoke([HumanMessage(content=prompt)])
-        return response.content.strip()
+        # return response.content.strip()
+        if isinstance(response.content, list):
+            text = "".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in response.content)
+        else:
+            text = str(response.content)
+            
+        return text.strip()
  
     except Exception as e:
         logger.error(f"call_gemini_for_text failed: {e}")
