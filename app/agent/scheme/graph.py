@@ -173,6 +173,7 @@ def build_scheme_agent_graph(db : Session):
                                     "error_handler" : "error_handler",
                                 })
     
+    graph.add_edge("farmer_profile_extractor", "missing_info_detector")
     graph.add_conditional_edges(
         "missing_info_detector",
         route_after_missing_info,
