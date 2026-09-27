@@ -146,6 +146,8 @@ def clear_session(session_id : str, user_id : int, db : Session) -> dict:
     session = db.query(AgentSession).filter(
         AgentSession.session_id == session_id,
         AgentSession.user_id == user_id,
+        
+        
     ).first()
  
     if not session:
