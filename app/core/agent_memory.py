@@ -33,9 +33,12 @@ def load_session(
             agent_name = agent_name,
             user_id = user_id,
             history = [],
-            farmer_profile = {},
+            # farmer_profile = {},
             turn_count = 0,
         )
+            
+            new_session.farmer_profile = {}
+
         
         
             db.add(new_session)
@@ -43,10 +46,11 @@ def load_session(
         
             return {
              "history" : [],
-             "farmer_profile" : [],
+            #  "farmer_profile" : [],
              "turn_count" : 0,
              "is_new" : True,  
         }
+            session.farmer_profile = farmer_profile
             
     except Exception as e:
         logger.error(f"Failed to load session {session_id}: {e}")
@@ -127,7 +131,7 @@ def build_history_context(history : list, max_turns: int = 10) -> str:
     
     for msg in recent:
         role = "Farmer" if msg.get("role") == "human" else "AgriAI"
-        content = msg.get("content", "").script()
+        content = msg.get("content", "").strip()
         lines.append(f"{role}:{content}")
         
         
