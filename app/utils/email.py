@@ -35,7 +35,7 @@ def send_reset_email(recipient_email : str, token : str):
     msg = MIMEText(body)
     
     msg["Subject"] = "KisanPath Password Reset"
-    msg["From"] = settings.EMAIL_USER
+    msg["From"] = settings.MAIL_USER
     msg["To"] = recipient_email
 
     with smtplib.SMTP(settings.EMAIL_HOST,settings.EMAIL_PORT) as server:
@@ -43,7 +43,7 @@ def send_reset_email(recipient_email : str, token : str):
         server.starttls()
 
         server.login(
-            settings.EMAIL_USER,
+            settings.MAIL_USER,
             settings.EMAIL_PASSWORD
         )
 
