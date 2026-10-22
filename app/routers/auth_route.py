@@ -11,7 +11,7 @@ from app.core.dependencies import (
 from app.core.security import decode_token, create_access_token
 from app.models.user_model import User
 from app.schemas.auth import UserRegister,FarmerRegister,VendorRegister,LoginRequest,TokenResponse,AccessTokenResponse,UserResponse, ForgetPasswordRequest, ResetPasswordRequest
-from app.services.auth_service import register_user, register_farmer, register_vendor, login_user, forget_password, reset_password
+from app.services.auth_service import register_user, register_farmer, register_vendor, login_user, forget_password, reset_passwords
 
 
 
@@ -205,9 +205,9 @@ def forgot(payload: ForgetPasswordRequest,db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password")
-def reset_password(payload: ResetPasswordRequest,db: Session = Depends(get_db)):
-
-    return reset_password(
+def reset_password_route(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+        
+    return reset_passwords(
         payload,
         db
     )
