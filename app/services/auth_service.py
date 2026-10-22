@@ -279,7 +279,7 @@ def forget_password(payload, db):
     
     
     
-def reset_password(payload, db):
+def reset_passwords(payload, db):
     
     email = verify_reset_token(payload.token)
     
@@ -295,8 +295,8 @@ def reset_password(payload, db):
 
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.hash_password = hash_password(payload.new_password)
-
+    user.hashed_password = hash_password(payload.new_password)
+    
     db.commit()
 
     return {
